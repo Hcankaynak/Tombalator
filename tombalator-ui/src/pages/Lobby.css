@@ -1,0 +1,206 @@
+.lobby {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.5rem;
+}
+
+.lobby-container {
+  max-width: 500px;
+  width: 100%;
+}
+
+.lobby-container-joined {
+  width: 100%;
+  max-width: 100%;
+  height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 0.5rem;
+}
+
+.lobby-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.lobby-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.lobby-title-joined {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  transition: color 0.3s ease;
+}
+
+.leave-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--error-color);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--error-color);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.leave-button:hover {
+  background-color: var(--error-color);
+  color: #fff;
+}
+
+.lobby-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 250px 1fr 400px;
+  gap: 1rem;
+  min-height: 0;
+}
+
+.lobby-sidebar-left {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.lobby-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.lobby-card-container {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.lobby-card-header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+.lobby-card-title {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  transition: color 0.3s ease;
+}
+
+.change-card-button {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: 1px solid var(--accent-color);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--accent-color);
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.change-card-button:hover {
+  background-color: var(--accent-color);
+  color: #fff;
+}
+
+.lobby-card-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 2px dashed var(--border-color);
+}
+
+.lobby-card-placeholder p {
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.lobby-sidebar-right {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.nickname-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.nickname-label {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  transition: color 0.3s ease;
+}
+
+.nickname-input {
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.25s, background-color 0.3s ease, color 0.3s ease;
+}
+
+.nickname-input:focus {
+  border-color: var(--accent-color);
+}
+
+.nickname-button {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background-color: var(--accent-color);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.25s;
+  margin-top: 0.5rem;
+}
+
+.nickname-button:hover {
+  background-color: var(--accent-hover);
+}
+
+@media (max-width: 768px) {
+  .lobby-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .lobby-sidebar {
+    max-height: 200px;
+  }
+}

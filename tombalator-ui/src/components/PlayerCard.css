@@ -1,0 +1,160 @@
+.player-card {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 2rem;
+  border: 3px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  box-shadow: 0 4px 20px var(--shadow);
+}
+
+.player-card-header {
+  margin-bottom: 1rem;
+}
+
+.player-card-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+}
+
+.player-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.player-card-row {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0.75rem;
+}
+
+.player-card-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  min-height: 60px;
+}
+
+/* Card themes - each card has one color theme */
+.player-card.theme-red .player-card-cell.has-number {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: #fff;
+  border-color: #ff6b6b;
+}
+
+.player-card.theme-blue .player-card-cell.has-number {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: #fff;
+  border-color: #4ecdc4;
+}
+
+.player-card.theme-green .player-card-cell.has-number {
+  background: linear-gradient(135deg, #a8e6cf 0%, #7fcdbb 100%);
+  color: #1a1a1a;
+  border-color: #a8e6cf;
+}
+
+.player-card.theme-purple .player-card-cell.has-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-color: #667eea;
+}
+
+.player-card.theme-orange .player-card-cell.has-number {
+  background: linear-gradient(135deg, #ffd3a5 0%, #fd9853 100%);
+  color: #fff;
+  border-color: #ffd3a5;
+}
+
+.player-card.theme-teal .player-card-cell.has-number {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: #fff;
+  border-color: #4ecdc4;
+}
+
+.player-card.theme-pink .player-card-cell.has-number {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+  border-color: #f093fb;
+}
+
+.player-card.theme-yellow .player-card-cell.has-number {
+  background: linear-gradient(135deg, #ffe66d 0%, #ffd93d 100%);
+  color: #1a1a1a;
+  border-color: #ffe66d;
+}
+
+.player-card-cell.empty {
+  background-color: var(--bg-primary);
+  border: 2px dashed var(--border-color);
+  opacity: 0.5;
+}
+
+.empty-placeholder {
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  font-weight: 300;
+  opacity: 0.4;
+}
+
+.player-card-cell.marked {
+  background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%) !important;
+  color: #fff !important;
+  border-color: var(--accent-color) !important;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+}
+
+@media (max-width: 1200px) {
+  .lobby-content {
+    grid-template-columns: 250px 1fr 280px;
+  }
+}
+
+@media (max-width: 968px) {
+  .lobby-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .lobby-sidebar-left {
+    max-height: 200px;
+  }
+
+  .lobby-sidebar-right {
+    max-height: 300px;
+  }
+
+  .player-card {
+    padding: 1.5rem;
+  }
+
+  .player-card-cell {
+    font-size: 1rem;
+    min-height: 50px;
+  }
+}
+
+@media (max-width: 768px) {
+  .player-card {
+    padding: 1rem;
+  }
+
+  .player-card-cell {
+    font-size: 0.85rem;
+    min-height: 40px;
+    gap: 0.5rem;
+  }
+
+  .player-card-row {
+    gap: 0.5rem;
+  }
+}
+

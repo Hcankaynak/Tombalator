@@ -1,0 +1,192 @@
+.card-selection-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.card-selection-modal {
+  background-color: var(--bg-secondary);
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px var(--shadow);
+  transition: background-color 0.3s ease;
+}
+
+.card-selection-title {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+  font-size: 1.8rem;
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.card-selection-subtitle {
+  margin: 0 0 2rem 0;
+  color: var(--text-secondary);
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.card-option {
+  background-color: var(--bg-tertiary);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.card-option:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.card-option.selected {
+  border-color: var(--accent-color);
+  background-color: var(--accent-light);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.card-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card-row {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0.25rem;
+}
+
+.card-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.card-cell.has-number {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Card themes for selection preview */
+.card-preview.theme-red .card-cell.has-number {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  color: #fff;
+  border-color: #ff6b6b;
+}
+
+.card-preview.theme-blue .card-cell.has-number {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: #fff;
+  border-color: #4ecdc4;
+}
+
+.card-preview.theme-green .card-cell.has-number {
+  background: linear-gradient(135deg, #a8e6cf 0%, #7fcdbb 100%);
+  color: #1a1a1a;
+  border-color: #a8e6cf;
+}
+
+.card-preview.theme-purple .card-cell.has-number {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  border-color: #667eea;
+}
+
+.card-preview.theme-orange .card-cell.has-number {
+  background: linear-gradient(135deg, #ffd3a5 0%, #fd9853 100%);
+  color: #fff;
+  border-color: #ffd3a5;
+}
+
+.card-preview.theme-teal .card-cell.has-number {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+  color: #fff;
+  border-color: #4ecdc4;
+}
+
+.card-preview.theme-pink .card-cell.has-number {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: #fff;
+  border-color: #f093fb;
+}
+
+.card-preview.theme-yellow .card-cell.has-number {
+  background: linear-gradient(135deg, #ffe66d 0%, #ffd93d 100%);
+  color: #1a1a1a;
+  border-color: #ffe66d;
+}
+
+.card-cell.empty {
+  background-color: var(--bg-primary);
+  border: 1px dashed var(--border-color);
+  opacity: 0.5;
+}
+
+.card-cell .empty-placeholder {
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  font-weight: 300;
+  opacity: 0.4;
+}
+
+.confirm-card-button {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background-color: var(--accent-color);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
+.confirm-card-button:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.confirm-card-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-selection-modal {
+    padding: 1.5rem;
+  }
+}
+
