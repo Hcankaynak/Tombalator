@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 
 // Use environment variable or fallback to localhost for development
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host
+// In production (Docker), auto-detect from window.location for nginx proxy
+const WS_BASE_URL = import.meta.env.VITE_WS_URL || 
+  (import.meta.env.DEV 
+    ? 'ws://localhost:3000' 
+    : (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host)
 
 interface WebSocketMessage {
   type: string

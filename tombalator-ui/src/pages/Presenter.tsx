@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import './Presenter.css'
 
-// Use environment variable or fallback to relative URL (works with nginx proxy)
-const API_BASE_URL = import.meta.env.VITE_API_URL || ''
+// Use environment variable or fallback to localhost for development
+// In production (Docker), empty string uses nginx proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')
 
 function Presenter() {
-  const [isAdmin, setIsAdmin] = useState(false)
-  const [apiKey, setApiKey] = useState('')
   const [lobbyId, setLobbyId] = useState('')
   const [hasLobby, setHasLobby] = useState(false)
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
@@ -17,13 +16,6 @@ function Presenter() {
   )
 
   useEffect(() => {
-    // Check if API key is stored
-    const savedApiKey = localStorage.getItem('admin_api_key')
-    if (savedApiKey) {
-      setApiKey(savedApiKey)
-      checkAdminStatus(savedApiKey)
-    }
-    
     // Check if lobby ID is stored
     const savedLobbyId = localStorage.getItem('presenter_lobby_id')
     if (savedLobbyId) {
@@ -31,34 +23,6 @@ function Presenter() {
       setHasLobby(true)
     }
   }, [])
-
-  const checkAdminStatus = async (key: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/check`, {
-        method: 'GET',
-        headers: {
-          'X-API-Key': key,
-        },
-      })
-      const data = await response.json()
-      if (data.isAdmin) {
-        setIsAdmin(true)
-        localStorage.setItem('admin_api_key', key)
-      } else {
-        setIsAdmin(false)
-      }
-    } catch (error) {
-      console.error('Error checking admin status:', error)
-      setIsAdmin(false)
-    }
-  }
-
-  const handleApiKeySubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (apiKey.trim()) {
-      checkAdminStatus(apiKey.trim())
-    }
-  }
 
   const selectRandomNumber = () => {
     if (availableNumbers.length === 0 || isSelecting) return
@@ -144,30 +108,6 @@ function Presenter() {
       setAvailableNumbers(Array.from({ length: 90 }, (_, i) => i + 1))
       // TODO: Send reset to backend
     }
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="presenter">
-        <div className="presenter-auth">
-          <h2>Presenter Access</h2>
-          <p>Enter your admin API key to access the presenter page</p>
-          <form onSubmit={handleApiKeySubmit} className="api-key-form">
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Enter API Key"
-              className="api-key-input"
-              required
-            />
-            <button type="submit" className="api-key-button">
-              Authenticate
-            </button>
-          </form>
-        </div>
-      </div>
-    )
   }
 
   if (!hasLobby) {
