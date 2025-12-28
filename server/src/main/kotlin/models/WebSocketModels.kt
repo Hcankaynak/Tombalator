@@ -79,3 +79,9 @@ data class CreateGameResponse(
     val message: String
 )
 
+@Serializable
+data class GameExistsResponse(
+    val exists: Boolean,
+    val gameId: String
+)
+

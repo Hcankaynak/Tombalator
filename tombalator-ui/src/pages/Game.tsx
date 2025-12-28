@@ -11,6 +11,15 @@ import './Game.css'
 
 const NICKNAME_STORAGE_KEY = 'tombalator_nickname'
 
+// Use environment variable or fallback to localhost for development
+// In production (Docker), empty string uses nginx proxy
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')
+
+interface GameExistsResponse {
+  exists: boolean
+  gameId: string
+}
+
 interface Message {
   id: string
   username: string
@@ -36,6 +45,48 @@ function Game() {
   const [messages, setMessages] = useState<Message[]>([])
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [isCheckingGame, setIsCheckingGame] = useState(true)
+  const [gameExists, setGameExists] = useState(false)
+
+  // Check if game exists when component mounts or gameId changes
+  useEffect(() => {
+    if (!gameId) {
+      setIsCheckingGame(false)
+      setGameExists(false)
+      setErrorMessage('Invalid game ID')
+      return
+    }
+
+    const checkGameExists = async () => {
+      setIsCheckingGame(true)
+      setErrorMessage(null)
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/game/${gameId}`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to check game existence')
+        }
+
+        const data: GameExistsResponse = await response.json()
+
+        if (data.exists) {
+          setGameExists(true)
+        } else {
+          setGameExists(false)
+          setErrorMessage(`Game with ID "${gameId}" does not exist. Please check the game ID and try again.`)
+        }
+      } catch (error) {
+        console.error('Error checking game existence:', error)
+        setGameExists(false)
+        setErrorMessage('Failed to check game. Please try again.')
+      } finally {
+        setIsCheckingGame(false)
+      }
+    }
+
+    checkGameExists()
+  }, [gameId])
 
   useEffect(() => {
     // Load nickname from localStorage if it exists
@@ -169,6 +220,43 @@ function Game() {
       message: text,
       timestamp: Date.now(),
     })
+  }
+
+  // Show loading state while checking if game exists
+  if (isCheckingGame) {
+    return (
+      <div className="game">
+        <div className="game-container">
+          <h2 className="game-title">Game: {gameId}</h2>
+          <div className="game-checking">
+            <p>Checking if game exists...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error if game doesn't exist
+  if (!gameExists) {
+    return (
+      <div className="game">
+        <div className="game-container">
+          <h2 className="game-title">Game: {gameId}</h2>
+          {errorMessage && (
+            <div className="error-message">
+              {errorMessage}
+            </div>
+          )}
+          <button 
+            onClick={() => navigate('/')}
+            className="game-button"
+            style={{ marginTop: '1rem', width: '100%' }}
+          >
+            Go Back to Home
+          </button>
+        </div>
+      </div>
+    )
   }
 
   if (!isJoined) {

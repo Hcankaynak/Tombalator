@@ -52,7 +52,27 @@
   transition: background-color 0.25s;
 }
 
-.game-button:hover {
+.game-button:hover:not(:disabled) {
   background-color: var(--accent-hover);
+}
+
+.game-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.game-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 0.75rem 1rem;
+  background-color: var(--error-bg, rgba(239, 68, 68, 0.1));
+  color: var(--error-text, #ef4444);
+  border: 1px solid var(--error-border, rgba(239, 68, 68, 0.3));
+  border-radius: 8px;
+  font-size: 0.875rem;
+  text-align: center;
 }
 

@@ -3,6 +3,7 @@ package com.tombalator.routing
 import com.tombalator.config.Config
 import com.tombalator.game.GameManager
 import com.tombalator.models.CreateGameResponse
+import com.tombalator.models.GameExistsResponse
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
 import io.ktor.server.application.*
@@ -19,6 +20,28 @@ private val logger = LoggerFactory.getLogger("com.tombalator.routing.GameRouting
 fun Application.configureGameRouting() {
     routing {
         route("/api/game") {
+            get("/{gameId}") {
+                val gameId = call.parameters["gameId"] ?: run {
+                    logger.warn("GET /api/game/{gameId} - Missing game ID")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        GameExistsResponse(exists = false, gameId = "")
+                    )
+                    return@get
+                }
+                
+                logger.info("GET /api/game/$gameId - Checking if game exists")
+                val exists = GameManager.gameExists(gameId)
+                
+                if (exists) {
+                    logger.info("GET /api/game/$gameId - Game exists")
+                } else {
+                    logger.info("GET /api/game/$gameId - Game does not exist")
+                }
+                
+                call.respond(GameExistsResponse(exists = exists, gameId = gameId))
+            }
+            
             post("/create") {
                 logger.info("POST /api/game/create - Game creation requested")
                 
