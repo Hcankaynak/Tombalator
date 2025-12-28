@@ -1,4 +1,4 @@
-.lobby {
+.game {
   flex: 1;
   display: flex;
   align-items: center;
@@ -6,12 +6,12 @@
   padding: 1rem 0.5rem;
 }
 
-.lobby-container {
+.game-container {
   max-width: 500px;
   width: 100%;
 }
 
-.lobby-container-joined {
+.game-container-joined {
   width: 100%;
   max-width: 100%;
   height: calc(100vh - 200px);
@@ -21,7 +21,7 @@
   padding: 0 0.5rem;
 }
 
-.lobby-header {
+.game-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,7 +31,7 @@
   transition: background-color 0.3s ease;
 }
 
-.lobby-title {
+.game-title {
   text-align: center;
   margin-bottom: 2rem;
   font-size: 2rem;
@@ -39,7 +39,7 @@
   transition: color 0.3s ease;
 }
 
-.lobby-title-joined {
+.game-title-joined {
   margin: 0;
   font-size: 1.5rem;
   color: var(--text-primary);
@@ -63,7 +63,7 @@
   color: #fff;
 }
 
-.lobby-content {
+.game-content {
   flex: 1;
   display: grid;
   grid-template-columns: 250px 1fr 400px;
@@ -71,14 +71,14 @@
   min-height: 0;
 }
 
-.lobby-sidebar-left {
+.game-sidebar-left {
   display: flex;
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
 }
 
-.lobby-center {
+.game-center {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,7 +87,7 @@
   overflow-y: auto;
 }
 
-.lobby-card-container {
+.game-card-container {
   width: 100%;
   max-width: 700px;
   display: flex;
@@ -96,14 +96,14 @@
   margin: 0 auto;
 }
 
-.lobby-card-header-section {
+.game-card-header-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 0.5rem;
 }
 
-.lobby-card-title {
+.game-card-title {
   margin: 0;
   color: var(--text-primary);
   font-size: 1.5rem;
@@ -127,7 +127,7 @@
   color: #fff;
 }
 
-.lobby-card-placeholder {
+.game-card-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -137,13 +137,13 @@
   border: 2px dashed var(--border-color);
 }
 
-.lobby-card-placeholder p {
+.game-card-placeholder p {
   color: var(--text-secondary);
   font-size: 1.2rem;
   margin: 0;
 }
 
-.lobby-sidebar-right {
+.game-sidebar-right {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -195,12 +195,13 @@
 }
 
 @media (max-width: 768px) {
-  .lobby-content {
+  .game-content {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr;
   }
 
-  .lobby-sidebar {
+  .game-sidebar {
     max-height: 200px;
   }
 }
+

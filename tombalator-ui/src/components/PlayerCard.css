@@ -113,22 +113,22 @@
 }
 
 @media (max-width: 1200px) {
-  .lobby-content {
+  .game-content {
     grid-template-columns: 250px 1fr 280px;
   }
 }
 
 @media (max-width: 968px) {
-  .lobby-content {
+  .game-content {
     grid-template-columns: 1fr;
     grid-template-rows: auto 1fr auto;
   }
 
-  .lobby-sidebar-left {
+  .game-sidebar-left {
     max-height: 200px;
   }
 
-  .lobby-sidebar-right {
+  .game-sidebar-right {
     max-height: 300px;
   }
 

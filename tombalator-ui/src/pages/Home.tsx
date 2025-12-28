@@ -3,31 +3,31 @@ import { useNavigate } from 'react-router-dom'
 import './Home.css'
 
 function Home() {
-  const [lobbyId, setLobbyId] = useState('')
+  const [gameId, setGameId] = useState('')
   const navigate = useNavigate()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (lobbyId.trim()) {
-      // Redirect to lobby page with the lobby ID
-      navigate(`/lobby/${lobbyId.trim()}`)
+    if (gameId.trim()) {
+      // Redirect to game page with the game ID
+      navigate(`/game/${gameId.trim()}`)
     }
   }
 
   return (
     <div className="home">
       <div className="home-container">
-        <h2 className="home-title">Join a Lobby</h2>
-        <form onSubmit={handleSubmit} className="lobby-form">
+        <h2 className="home-title">Join a Game</h2>
+        <form onSubmit={handleSubmit} className="game-form">
           <input
             type="text"
-            value={lobbyId}
-            onChange={(e) => setLobbyId(e.target.value)}
-            placeholder="Enter Lobby ID"
-            className="lobby-input"
+            value={gameId}
+            onChange={(e) => setGameId(e.target.value)}
+            placeholder="Enter Game ID"
+            className="game-input"
             required
           />
-          <button type="submit" className="lobby-button">
+          <button type="submit" className="game-button">
             Join
           </button>
         </form>

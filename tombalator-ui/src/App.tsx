@@ -4,7 +4,7 @@ import { AdminProvider } from './contexts/AdminContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
-import Lobby from './pages/Lobby'
+import Game from './pages/Game'
 import Presenter from './pages/Presenter'
 import './App.css'
 
@@ -18,7 +18,7 @@ function App() {
             <main className="main-content">
               <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/lobby/:lobbyId" element={<Lobby />} />
+                <Route path="/game/:gameId" element={<Game />} />
                 <Route path="/presenter" element={<Presenter />} />
               </Routes>
             </main>

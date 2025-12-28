@@ -6,8 +6,8 @@ import './Presenter.css'
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '')
 
 function Presenter() {
-  const [lobbyId, setLobbyId] = useState('')
-  const [hasLobby, setHasLobby] = useState(false)
+  const [gameId, setGameId] = useState('')
+  const [hasGame, setHasGame] = useState(false)
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [currentNumber, setCurrentNumber] = useState<number | null>(null)
   const [isSelecting, setIsSelecting] = useState(false)
@@ -16,11 +16,11 @@ function Presenter() {
   )
 
   useEffect(() => {
-    // Check if lobby ID is stored
-    const savedLobbyId = localStorage.getItem('presenter_lobby_id')
-    if (savedLobbyId) {
-      setLobbyId(savedLobbyId)
-      setHasLobby(true)
+    // Check if game ID is stored
+    const savedGameId = localStorage.getItem('presenter_game_id')
+    if (savedGameId) {
+      setGameId(savedGameId)
+      setHasGame(true)
     }
   }, [])
 
@@ -58,17 +58,17 @@ function Presenter() {
     }, shuffleInterval)
   }
 
-  const handleLobbyIdSubmit = (e: React.FormEvent) => {
+  const handleGameIdSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (lobbyId.trim()) {
-      setHasLobby(true)
-      localStorage.setItem('presenter_lobby_id', lobbyId.trim())
-      // TODO: Connect to lobby via WebSocket/API
-      console.log('Joined lobby:', lobbyId.trim())
+    if (gameId.trim()) {
+      setHasGame(true)
+      localStorage.setItem('presenter_game_id', gameId.trim())
+      // TODO: Connect to game via WebSocket/API
+      console.log('Joined game:', gameId.trim())
     }
   }
 
-  const handleCreateLobby = async () => {
+  const handleCreateGame = async () => {
     try {
       const savedApiKey = localStorage.getItem('admin_api_key')
       if (!savedApiKey) {
@@ -76,7 +76,7 @@ function Presenter() {
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/lobby/create`, {
+      const response = await fetch(`${API_BASE_URL}/api/game/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,18 +86,18 @@ function Presenter() {
 
       const data = await response.json()
 
-      if (data.success && data.lobbyId) {
-        setLobbyId(data.lobbyId)
-        setHasLobby(true)
-        localStorage.setItem('presenter_lobby_id', data.lobbyId)
-        console.log('Created lobby:', data.lobbyId)
+      if (data.success && data.gameId) {
+        setGameId(data.gameId)
+        setHasGame(true)
+        localStorage.setItem('presenter_game_id', data.gameId)
+        console.log('Created game:', data.gameId)
       } else {
-        alert(`Failed to create lobby: ${data.message || 'Unknown error'}`)
-        console.error('Error creating lobby:', data)
+        alert(`Failed to create game: ${data.message || 'Unknown error'}`)
+        console.error('Error creating game:', data)
       }
     } catch (error) {
-      console.error('Error creating lobby:', error)
-      alert('Failed to create lobby. Please try again.')
+      console.error('Error creating game:', error)
+      alert('Failed to create game. Please try again.')
     }
   }
 
@@ -110,37 +110,37 @@ function Presenter() {
     }
   }
 
-  if (!hasLobby) {
+  if (!hasGame) {
     return (
       <div className="presenter">
-        <div className="presenter-lobby-setup">
-          <h2>Select or Create Lobby</h2>
-          <div className="lobby-setup-content">
-            <div className="join-lobby-section">
-              <h3>Join Existing Lobby</h3>
-              <p>Enter a lobby ID to join an existing game</p>
-              <form onSubmit={handleLobbyIdSubmit} className="lobby-id-form">
+        <div className="presenter-game-setup">
+          <h2>Select or Create Game</h2>
+          <div className="game-setup-content">
+            <div className="join-game-section">
+              <h3>Join Existing Game</h3>
+              <p>Enter a game ID to join an existing game</p>
+              <form onSubmit={handleGameIdSubmit} className="game-id-form">
                 <input
                   type="text"
-                  value={lobbyId}
-                  onChange={(e) => setLobbyId(e.target.value)}
-                  placeholder="Enter Lobby ID"
-                  className="lobby-id-input"
+                  value={gameId}
+                  onChange={(e) => setGameId(e.target.value)}
+                  placeholder="Enter Game ID"
+                  className="game-id-input"
                   required
                 />
-                <button type="submit" className="lobby-id-button">
-                  Join Lobby
+                <button type="submit" className="game-id-button">
+                  Join Game
                 </button>
               </form>
             </div>
             <div className="divider">
               <span>OR</span>
             </div>
-            <div className="create-lobby-section">
-              <h3>Create New Lobby</h3>
-              <p>Create a new lobby to start a game</p>
-              <button onClick={handleCreateLobby} className="create-lobby-button">
-                Create Lobby
+            <div className="create-game-section">
+              <h3>Create New Game</h3>
+              <p>Create a new game to start</p>
+              <button onClick={handleCreateGame} className="create-game-button">
+                Create Game
               </button>
             </div>
           </div>
@@ -155,11 +155,11 @@ function Presenter() {
         <div className="presenter-header">
           <div>
             <h2>Presenter Control Panel</h2>
-            <p className="lobby-info">Lobby: {lobbyId}</p>
+            <p className="game-info">Game: {gameId}</p>
           </div>
           <div className="presenter-header-actions">
-            <button onClick={() => { setHasLobby(false); localStorage.removeItem('presenter_lobby_id'); }} className="change-lobby-button">
-              Change Lobby
+            <button onClick={() => { setHasGame(false); localStorage.removeItem('presenter_game_id'); }} className="change-game-button">
+              Change Game
             </button>
             <button onClick={resetGame} className="reset-button">
               Reset Game

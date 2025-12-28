@@ -13,7 +13,7 @@ interface WebSocketMessage {
 }
 
 interface UseWebSocketOptions {
-  lobbyId: string
+  gameId: string
   userId: string
   username: string
   onMessage?: (message: WebSocketMessage) => void
@@ -23,7 +23,7 @@ interface UseWebSocketOptions {
 }
 
 export function useWebSocket({
-  lobbyId,
+  gameId,
   userId,
   username,
   onMessage,
@@ -41,7 +41,7 @@ export function useWebSocket({
     }
 
     try {
-      const ws = new WebSocket(`${WS_BASE_URL}/ws/lobby/${lobbyId}`)
+      const ws = new WebSocket(`${WS_BASE_URL}/ws/game/${gameId}`)
       wsRef.current = ws
 
       ws.onopen = () => {
@@ -49,8 +49,8 @@ export function useWebSocket({
         // Send join message
         ws.send(
           JSON.stringify({
-            type: 'join_lobby',
-            lobbyId,
+            type: 'join_game',
+            gameId,
             userId,
             username,
           })
@@ -78,7 +78,7 @@ export function useWebSocket({
         
         // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
-          if (lobbyId && userId && username) {
+          if (gameId && userId && username) {
             connect()
           }
         }, 3000)
@@ -86,7 +86,7 @@ export function useWebSocket({
     } catch (error) {
       console.error('Error creating WebSocket:', error)
     }
-  }, [lobbyId, userId, username, onMessage, onError, onOpen, onClose])
+  }, [gameId, userId, username, onMessage, onError, onOpen, onClose])
 
   const sendMessage = useCallback((message: WebSocketMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -108,14 +108,14 @@ export function useWebSocket({
   }, [])
 
   useEffect(() => {
-    if (lobbyId && userId && username) {
+    if (gameId && userId && username) {
       connect()
     }
 
     return () => {
       disconnect()
     }
-  }, [lobbyId, userId, username])
+  }, [gameId, userId, username])
 
   return {
     isConnected,

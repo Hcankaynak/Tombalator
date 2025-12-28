@@ -8,46 +8,46 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class ConnectionInfo(
     val session: DefaultWebSocketSession,
-    val lobbyId: String,
+    val gameId: String,
     val userId: String,
     val username: String
 )
 
 object WebSocketManager {
-    // Map of lobbyId -> Set of connections
-    private val lobbyConnections = ConcurrentHashMap<String, MutableSet<ConnectionInfo>>()
+    // Map of gameId -> Set of connections
+    private val gameConnections = ConcurrentHashMap<String, MutableSet<ConnectionInfo>>()
     
     // Map of session -> ConnectionInfo for quick lookup
     private val sessionToConnection = ConcurrentHashMap<DefaultWebSocketSession, ConnectionInfo>()
     
-    fun addConnection(lobbyId: String, userId: String, username: String, session: DefaultWebSocketSession) {
-        val connection = ConnectionInfo(session, lobbyId, userId, username)
+    fun addConnection(gameId: String, userId: String, username: String, session: DefaultWebSocketSession) {
+        val connection = ConnectionInfo(session, gameId, userId, username)
         
-        lobbyConnections.getOrPut(lobbyId) { mutableSetOf() }.add(connection)
+        gameConnections.getOrPut(gameId) { mutableSetOf() }.add(connection)
         sessionToConnection[session] = connection
     }
     
     fun removeConnection(session: DefaultWebSocketSession) {
         val connection = sessionToConnection.remove(session) ?: return
         
-        lobbyConnections[connection.lobbyId]?.remove(connection)
+        gameConnections[connection.gameId]?.remove(connection)
         
-        // Clean up empty lobby sets
-        if (lobbyConnections[connection.lobbyId]?.isEmpty() == true) {
-            lobbyConnections.remove(connection.lobbyId)
+        // Clean up empty game sets
+        if (gameConnections[connection.gameId]?.isEmpty() == true) {
+            gameConnections.remove(connection.gameId)
         }
     }
     
-    fun getConnectionsForLobby(lobbyId: String): Set<ConnectionInfo> {
-        return lobbyConnections[lobbyId]?.toSet() ?: emptySet()
+    fun getConnectionsForGame(gameId: String): Set<ConnectionInfo> {
+        return gameConnections[gameId]?.toSet() ?: emptySet()
     }
     
     fun getAllConnections(): Set<ConnectionInfo> {
         return sessionToConnection.values.toSet()
     }
     
-    suspend fun broadcastToLobby(lobbyId: String, message: String) {
-        val connections = getConnectionsForLobby(lobbyId)
+    suspend fun broadcastToGame(gameId: String, message: String) {
+        val connections = getConnectionsForGame(gameId)
         connections.forEach { connection ->
             try {
                 connection.session.send(Frame.Text(message))

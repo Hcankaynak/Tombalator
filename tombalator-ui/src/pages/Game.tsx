@@ -7,7 +7,7 @@ import type { TombalaCard } from '../components/CardSelection'
 import PlayerCard from '../components/PlayerCard'
 import { generateCards } from '../utils/cardGenerator'
 import { useWebSocket } from '../hooks/useWebSocket'
-import './Lobby.css'
+import './Game.css'
 
 const NICKNAME_STORAGE_KEY = 'tombalator_nickname'
 
@@ -23,8 +23,8 @@ interface User {
   username: string
 }
 
-function Lobby() {
-  const { lobbyId } = useParams<{ lobbyId: string }>()
+function Game() {
+  const { gameId } = useParams<{ gameId: string }>()
   const navigate = useNavigate()
   const [nickname, setNickname] = useState('')
   const [isJoined, setIsJoined] = useState(false)
@@ -71,7 +71,7 @@ function Lobby() {
 
   // WebSocket connection - only connect after joining
   const { isConnected, sendMessage } = useWebSocket({
-    lobbyId: lobbyId || '',
+    gameId: gameId || '',
     userId: currentUserId,
     username: nickname,
     onMessage: (message) => {
@@ -119,7 +119,7 @@ function Lobby() {
       }
     },
     onOpen: () => {
-      console.log('WebSocket connected to lobby:', lobbyId)
+      console.log('WebSocket connected to game:', gameId)
     },
     onClose: () => {
       console.log('WebSocket disconnected')
@@ -156,9 +156,9 @@ function Lobby() {
 
   if (!isJoined) {
     return (
-      <div className="lobby">
-        <div className="lobby-container">
-          <h2 className="lobby-title">Lobby: {lobbyId}</h2>
+      <div className="game">
+        <div className="game-container">
+          <h2 className="game-title">Game: {gameId}</h2>
           <form onSubmit={handleJoin} className="nickname-form">
             <label htmlFor="nickname" className="nickname-label">
               Enter your nickname
@@ -183,32 +183,32 @@ function Lobby() {
   }
 
   return (
-    <div className="lobby">
+    <div className="game">
       {showCardSelection && (
         <CardSelection
           cards={availableCards}
           onSelectCard={handleCardSelect}
         />
       )}
-      <div className="lobby-container-joined">
-        <div className="lobby-header">
-          <h2 className="lobby-title-joined">Lobby: {lobbyId}</h2>
+      <div className="game-container-joined">
+        <div className="game-header">
+          <h2 className="game-title-joined">Game: {gameId}</h2>
           <button
             onClick={() => navigate('/')}
             className="leave-button"
           >
-            Leave Lobby
+            Leave Game
           </button>
         </div>
-        <div className="lobby-content">
-          <div className="lobby-sidebar-left">
+        <div className="game-content">
+          <div className="game-sidebar-left">
             <UsersList users={users} currentUsername={nickname} />
           </div>
-          <div className="lobby-center">
+          <div className="game-center">
             {selectedCard ? (
-              <div className="lobby-card-container">
-                <div className="lobby-card-header-section">
-                  <h3 className="lobby-card-title">Your Card</h3>
+              <div className="game-card-container">
+                <div className="game-card-header-section">
+                  <h3 className="game-card-title">Your Card</h3>
                   {!gameStarted && (
                     <button
                       onClick={handleChangeCard}
@@ -221,12 +221,12 @@ function Lobby() {
                 <PlayerCard card={selectedCard} />
               </div>
             ) : (
-              <div className="lobby-card-placeholder">
+              <div className="game-card-placeholder">
                 <p>Select a card to start</p>
               </div>
             )}
           </div>
-          <div className="lobby-sidebar-right">
+          <div className="game-sidebar-right">
             <Chat
               currentUsername={nickname}
               messages={messages}
@@ -239,4 +239,5 @@ function Lobby() {
   )
 }
 
-export default Lobby
+export default Game
+

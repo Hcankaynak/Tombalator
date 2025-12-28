@@ -9,16 +9,16 @@ import kotlinx.serialization.json.JsonClassDiscriminator
 sealed class WebSocketMessage
 
 @Serializable
-@SerialName("join_lobby")
-data class JoinLobbyMessage(
-    val lobbyId: String,
+@SerialName("join_game")
+data class JoinGameMessage(
+    val gameId: String,
     val userId: String,
     val username: String
 ) : WebSocketMessage()
 
 @Serializable
-@SerialName("leave_lobby")
-data class LeaveLobbyMessage(
+@SerialName("leave_game")
+data class LeaveGameMessage(
     val dummy: String = ""
 ) : WebSocketMessage()
 

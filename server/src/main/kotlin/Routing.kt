@@ -1,7 +1,7 @@
 package com.tombalator
 
 import com.tombalator.config.Config
-import com.tombalator.lobby.LobbyManager
+import com.tombalator.game.GameManager
 import com.tombalator.models.*
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
@@ -34,9 +34,9 @@ data class TestResponse(
 )
 
 @Serializable
-data class CreateLobbyResponse(
+data class CreateGameResponse(
     val success: Boolean,
-    val lobbyId: String?,
+    val gameId: String?,
     val message: String
 )
 
@@ -57,47 +57,47 @@ fun Application.configureRouting() {
             call.respond(IsAdminResponse(isAdmin))
         }
         
-        post("/api/lobby/create") {
-            logger.info("POST /api/lobby/create - Lobby creation requested")
+        post("/api/game/create") {
+            logger.info("POST /api/game/create - Game creation requested")
             
             // Check admin authentication
             val apiKey = call.request.header("X-API-Key") 
                 ?: call.request.queryParameters["apiKey"]
             
             if (apiKey == null || apiKey != Config.ADMIN_API_KEY) {
-                logger.warn("POST /api/lobby/create - UNAUTHORIZED: Invalid or missing API key")
+                logger.warn("POST /api/game/create - UNAUTHORIZED: Invalid or missing API key")
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    CreateLobbyResponse(
+                    CreateGameResponse(
                         success = false,
-                        lobbyId = null,
+                        gameId = null,
                         message = "Unauthorized. Admin API key required."
                     )
                 )
                 return@post
             }
             
-            // Generate and create lobby with random 4-digit ID
-            val lobbyId = LobbyManager.createLobby()
+            // Generate and create game with random 4-digit ID
+            val gameId = GameManager.createGame()
             
-            if (lobbyId != null) {
-                logger.info("POST /api/lobby/create - SUCCESS: Lobby created with ID: $lobbyId")
+            if (gameId != null) {
+                logger.info("POST /api/game/create - SUCCESS: Game created with ID: $gameId")
                 call.respond(
                     HttpStatusCode.Created,
-                    CreateLobbyResponse(
+                    CreateGameResponse(
                         success = true,
-                        lobbyId = lobbyId,
-                        message = "Lobby created successfully."
+                        gameId = gameId,
+                        message = "Game created successfully."
                     )
                 )
             } else {
-                logger.error("POST /api/lobby/create - FAILED: Unable to generate unique lobby ID")
+                logger.error("POST /api/game/create - FAILED: Unable to generate unique game ID")
                 call.respond(
                     HttpStatusCode.ServiceUnavailable,
-                    CreateLobbyResponse(
+                    CreateGameResponse(
                         success = false,
-                        lobbyId = null,
-                        message = "Unable to generate unique lobby ID. All IDs may be in use."
+                        gameId = null,
+                        message = "Unable to generate unique game ID. All IDs may be in use."
                     )
                 )
             }
@@ -112,15 +112,15 @@ fun Application.configureRouting() {
             ))
         }
         
-        webSocket("/ws/lobby/{lobbyId}") {
-            val lobbyId = call.parameters["lobbyId"] ?: run {
-                logger.warn("WebSocket /ws/lobby/{lobbyId} - REJECTED: Missing lobby ID")
-                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing lobby ID"))
+        webSocket("/ws/game/{gameId}") {
+            val gameId = call.parameters["gameId"] ?: run {
+                logger.warn("WebSocket /ws/game/{gameId} - REJECTED: Missing game ID")
+                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing game ID"))
                 return@webSocket
             }
             
-            logger.info("WebSocket /ws/lobby/$lobbyId - Connection established")
-            val handler = WebSocketHandler(lobbyId, this)
+            logger.info("WebSocket /ws/game/$gameId - Connection established")
+            val handler = WebSocketHandler(gameId, this)
             
             try {
                 for (frame in incoming) {
@@ -128,22 +128,22 @@ fun Application.configureRouting() {
                         val message = WebSocketCodec.decode(frame.readText())
                         if (message != null) {
                             val messageType = message::class.simpleName ?: "Unknown"
-                            logger.debug("WebSocket /ws/lobby/$lobbyId - Received message type: $messageType")
+                            logger.debug("WebSocket /ws/game/$gameId - Received message type: $messageType")
                             val shouldContinue = handler.handleMessage(message)
                             if (!shouldContinue) {
-                                logger.info("WebSocket /ws/lobby/$lobbyId - Connection closing")
+                                logger.info("WebSocket /ws/game/$gameId - Connection closing")
                                 break
                             }
                         } else {
-                            logger.warn("WebSocket /ws/lobby/$lobbyId - Invalid message format")
+                            logger.warn("WebSocket /ws/game/$gameId - Invalid message format")
                             handler.sendError("Invalid message format")
                         }
                     }
                 }
             } catch (e: Exception) {
-                logger.error("WebSocket /ws/lobby/$lobbyId - Error: ${e.message}", e)
+                logger.error("WebSocket /ws/game/$gameId - Error: ${e.message}", e)
             } finally {
-                logger.info("WebSocket /ws/lobby/$lobbyId - Connection closed")
+                logger.info("WebSocket /ws/game/$gameId - Connection closed")
                 handler.cleanup()
             }
         }

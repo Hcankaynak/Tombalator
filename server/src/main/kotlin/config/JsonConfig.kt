@@ -13,8 +13,8 @@ object JsonConfig {
         ignoreUnknownKeys = true
         serializersModule = SerializersModule {
             polymorphic(WebSocketMessage::class) {
-                subclass(JoinLobbyMessage::class)
-                subclass(LeaveLobbyMessage::class)
+                subclass(JoinGameMessage::class)
+                subclass(LeaveGameMessage::class)
                 subclass(ChatMessage::class)
                 subclass(NumberDrawnMessage::class)
                 subclass(PlayerJoinedMessage::class)

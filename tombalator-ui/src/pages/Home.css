@@ -19,13 +19,13 @@
   transition: color 0.3s ease;
 }
 
-.lobby-form {
+.game-form {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.lobby-input {
+.game-input {
   padding: 0.75rem 1rem;
   font-size: 1rem;
   border: 1px solid var(--border-color);
@@ -36,11 +36,11 @@
   transition: border-color 0.25s, background-color 0.3s ease, color 0.3s ease;
 }
 
-.lobby-input:focus {
+.game-input:focus {
   border-color: var(--accent-color);
 }
 
-.lobby-button {
+.game-button {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   font-weight: 500;
@@ -52,7 +52,7 @@
   transition: background-color 0.25s;
 }
 
-.lobby-button:hover {
+.game-button:hover {
   background-color: var(--accent-hover);
 }
 
