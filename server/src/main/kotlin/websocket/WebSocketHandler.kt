@@ -1,5 +1,6 @@
 package com.tombalator.websocket
 
+import com.tombalator.lobby.LobbyManager
 import com.tombalator.models.*
 import io.ktor.websocket.*
 
@@ -11,6 +12,18 @@ class WebSocketHandler(
     private var username: String? = null
     
     suspend fun handleJoin(message: JoinLobbyMessage) {
+        // Validate that the message lobbyId matches the URL lobbyId
+        if (message.lobbyId != lobbyId) {
+            sendError("Lobby ID mismatch. Expected: $lobbyId, got: ${message.lobbyId}")
+            return
+        }
+        
+        // Check if lobby exists
+        if (!LobbyManager.lobbyExists(lobbyId)) {
+            sendError("Lobby with ID '$lobbyId' does not exist. Please create the lobby first.")
+            return
+        }
+        
         userId = message.userId
         username = message.username
         
