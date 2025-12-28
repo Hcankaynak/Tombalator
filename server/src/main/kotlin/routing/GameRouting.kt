@@ -3,10 +3,14 @@ package com.tombalator.routing
 import com.tombalator.config.Config
 import com.tombalator.game.GameManager
 import com.tombalator.models.CreateGameResponse
+import com.tombalator.websocket.WebSocketCodec
+import com.tombalator.websocket.WebSocketHandler
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.websocket.*
+import io.ktor.websocket.*
 import io.ktor.http.*
 import org.slf4j.LoggerFactory
 
@@ -59,6 +63,42 @@ fun Application.configureGameRouting() {
                         )
                     )
                 }
+            }
+        }
+        
+        webSocket("/ws/game/{gameId}") {
+            val gameId = call.parameters["gameId"] ?: run {
+                logger.warn("WebSocket /ws/game/{gameId} - REJECTED: Missing game ID")
+                close(CloseReason(CloseReason.Codes.CANNOT_ACCEPT, "Missing game ID"))
+                return@webSocket
+            }
+            
+            logger.info("WebSocket /ws/game/$gameId - Connection established")
+            val handler = WebSocketHandler(gameId, this)
+            
+            try {
+                for (frame in incoming) {
+                    if (frame is Frame.Text) {
+                        val message = WebSocketCodec.decode(frame.readText())
+                        if (message != null) {
+                            val messageType = message::class.simpleName ?: "Unknown"
+                            logger.debug("WebSocket /ws/game/$gameId - Received message type: $messageType")
+                            val shouldContinue = handler.handleMessage(message)
+                            if (!shouldContinue) {
+                                logger.info("WebSocket /ws/game/$gameId - Connection closing")
+                                break
+                            }
+                        } else {
+                            logger.warn("WebSocket /ws/game/$gameId - Invalid message format")
+                            handler.sendError("Invalid message format")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                logger.error("WebSocket /ws/game/$gameId - Error: ${e.message}", e)
+            } finally {
+                logger.info("WebSocket /ws/game/$gameId - Connection closed")
+                handler.cleanup()
             }
         }
     }
