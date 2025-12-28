@@ -3,6 +3,9 @@ package com.tombalator.websocket
 import com.tombalator.lobby.LobbyManager
 import com.tombalator.models.*
 import io.ktor.websocket.*
+import org.slf4j.LoggerFactory
+
+private val logger = LoggerFactory.getLogger("com.tombalator.websocket.WebSocketHandler")
 
 class WebSocketHandler(
     private val lobbyId: String,
@@ -14,18 +17,22 @@ class WebSocketHandler(
     suspend fun handleJoin(message: JoinLobbyMessage) {
         // Validate that the message lobbyId matches the URL lobbyId
         if (message.lobbyId != lobbyId) {
+            logger.warn("WebSocket join - Lobby ID mismatch. Expected: $lobbyId, got: ${message.lobbyId}")
             sendError("Lobby ID mismatch. Expected: $lobbyId, got: ${message.lobbyId}")
             return
         }
         
         // Check if lobby exists
         if (!LobbyManager.lobbyExists(lobbyId)) {
+            logger.warn("WebSocket join - Lobby '$lobbyId' does not exist. User: ${message.username}")
             sendError("Lobby with ID '$lobbyId' does not exist. Please create the lobby first.")
             return
         }
         
         userId = message.userId
         username = message.username
+        
+        logger.info("WebSocket join - User '${message.username}' (${message.userId}) joined lobby '$lobbyId'")
         
         // Add connection to manager
         WebSocketManager.addConnection(
@@ -57,9 +64,12 @@ class WebSocketHandler(
     
     suspend fun handleChat(message: ChatMessage) {
         if (userId == null || username == null) {
+            logger.warn("WebSocket chat - Unauthenticated user attempted to send message in lobby '$lobbyId'")
             sendError("Not authenticated. Please join lobby first.")
             return
         }
+        
+        logger.info("WebSocket chat - User '${username}' sent message in lobby '$lobbyId': ${message.message}")
         
         // Create chat message with current user info
         val chatMsg = ChatMessage(
@@ -80,6 +90,8 @@ class WebSocketHandler(
         if (userId == null || username == null) {
             return
         }
+        
+        logger.info("WebSocket leave - User '$username' left lobby '$lobbyId'")
         
         // Remove connection
         WebSocketManager.removeConnection(session)

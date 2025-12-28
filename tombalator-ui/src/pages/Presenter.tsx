@@ -105,15 +105,34 @@ function Presenter() {
 
   const handleCreateLobby = async () => {
     try {
-      // TODO: Call backend API to create lobby
-      // Generate a random 4-digit number (1000-9999)
-      const newLobbyId = Math.floor(1000 + Math.random() * 9000).toString()
-      setLobbyId(newLobbyId)
-      setHasLobby(true)
-      localStorage.setItem('presenter_lobby_id', newLobbyId)
-      console.log('Created lobby:', newLobbyId)
+      const savedApiKey = localStorage.getItem('admin_api_key')
+      if (!savedApiKey) {
+        alert('Admin API key not found. Please authenticate first.')
+        return
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/lobby/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': savedApiKey,
+        },
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.lobbyId) {
+        setLobbyId(data.lobbyId)
+        setHasLobby(true)
+        localStorage.setItem('presenter_lobby_id', data.lobbyId)
+        console.log('Created lobby:', data.lobbyId)
+      } else {
+        alert(`Failed to create lobby: ${data.message || 'Unknown error'}`)
+        console.error('Error creating lobby:', data)
+      }
     } catch (error) {
       console.error('Error creating lobby:', error)
+      alert('Failed to create lobby. Please try again.')
     }
   }
 
