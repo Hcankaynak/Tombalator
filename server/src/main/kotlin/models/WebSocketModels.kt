@@ -72,3 +72,10 @@ data class ErrorMessage(
     val message: String
 ) : WebSocketMessage()
 
+@Serializable
+data class CreateGameResponse(
+    val success: Boolean,
+    val gameId: String?,
+    val message: String
+)
+

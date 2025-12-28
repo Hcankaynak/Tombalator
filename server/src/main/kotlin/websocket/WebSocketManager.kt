@@ -42,6 +42,16 @@ object WebSocketManager {
         return gameConnections[gameId]?.toSet() ?: emptySet()
     }
     
+    /**
+     * Checks if a username already exists in the game (case-insensitive)
+     */
+    fun isUsernameTaken(gameId: String, username: String): Boolean {
+        val connections = getConnectionsForGame(gameId)
+        return connections.any { 
+            it.username.equals(username, ignoreCase = true) 
+        }
+    }
+    
     fun getAllConnections(): Set<ConnectionInfo> {
         return sessionToConnection.values.toSet()
     }

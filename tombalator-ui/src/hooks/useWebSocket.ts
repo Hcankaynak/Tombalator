@@ -16,6 +16,7 @@ interface UseWebSocketOptions {
   gameId: string
   userId: string
   username: string
+  enabled?: boolean
   onMessage?: (message: WebSocketMessage) => void
   onError?: (error: Event) => void
   onOpen?: () => void
@@ -26,6 +27,7 @@ export function useWebSocket({
   gameId,
   userId,
   username,
+  enabled = true,
   onMessage,
   onError,
   onOpen,
@@ -34,6 +36,7 @@ export function useWebSocket({
   const [isConnected, setIsConnected] = useState(false)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wasConnectedRef = useRef(false)
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -46,6 +49,7 @@ export function useWebSocket({
 
       ws.onopen = () => {
         setIsConnected(true)
+        wasConnectedRef.current = true
         // Send join message
         ws.send(
           JSON.stringify({
@@ -76,17 +80,22 @@ export function useWebSocket({
         setIsConnected(false)
         onClose?.()
         
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (gameId && userId && username) {
-            connect()
-          }
-        }, 3000)
+        // Only attempt to reconnect if we were previously successfully connected
+        // This prevents reconnection when join is rejected (e.g., duplicate nickname)
+        if (wasConnectedRef.current && enabled) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (gameId && userId && username && enabled) {
+              connect()
+            }
+          }, 3000)
+        } else {
+          wasConnectedRef.current = false
+        }
       }
     } catch (error) {
       console.error('Error creating WebSocket:', error)
     }
-  }, [gameId, userId, username, onMessage, onError, onOpen, onClose])
+  }, [gameId, userId, username, enabled, onMessage, onError, onOpen, onClose])
 
   const sendMessage = useCallback((message: WebSocketMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -99,23 +108,27 @@ export function useWebSocket({
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
     }
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
     }
     setIsConnected(false)
+    wasConnectedRef.current = false
   }, [])
 
   useEffect(() => {
-    if (gameId && userId && username) {
+    if (enabled && gameId && userId && username) {
       connect()
+    } else {
+      disconnect()
     }
 
     return () => {
       disconnect()
     }
-  }, [gameId, userId, username])
+  }, [enabled, gameId, userId, username])
 
   return {
     isConnected,

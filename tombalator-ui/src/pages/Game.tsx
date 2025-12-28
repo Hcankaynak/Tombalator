@@ -31,10 +31,11 @@ function Game() {
   const [showCardSelection, setShowCardSelection] = useState(false)
   const [availableCards, setAvailableCards] = useState<TombalaCard[]>([])
   const [selectedCard, setSelectedCard] = useState<TombalaCard | null>(null)
-  const [gameStarted, setGameStarted] = useState(false)
   const [currentUserId, setCurrentUserId] = useState('')
   const [users, setUsers] = useState<User[]>([])
   const [messages, setMessages] = useState<Message[]>([])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isConnecting, setIsConnecting] = useState(false)
 
   useEffect(() => {
     // Load nickname from localStorage if it exists
@@ -47,6 +48,9 @@ function Game() {
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault()
     if (nickname.trim()) {
+      setErrorMessage(null)
+      setIsConnecting(true)
+      
       // Save nickname to localStorage
       localStorage.setItem(NICKNAME_STORAGE_KEY, nickname.trim())
       
@@ -54,30 +58,21 @@ function Game() {
       const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       setCurrentUserId(userId)
       
-      // Add current user to users list
-      const newUser: User = {
-        id: userId,
-        username: nickname.trim(),
-      }
-      setUsers([newUser])
-      setIsJoined(true)
-      
-      // Generate 3 cards for selection
-      const cards = generateCards(3)
-      setAvailableCards(cards)
-      setShowCardSelection(true)
+      // Note: isJoined will be set to true only after successful WebSocket join
+      // (when we receive players_update message)
     }
   }
 
-  // WebSocket connection - only connect after joining
+  // WebSocket connection - only connect after user submits nickname
   const { isConnected, sendMessage } = useWebSocket({
     gameId: gameId || '',
     userId: currentUserId,
     username: nickname,
+    enabled: isConnecting && !!currentUserId && !!nickname.trim(),
     onMessage: (message) => {
       switch (message.type) {
         case 'players_update':
-          // Update entire players list
+          // Update entire players list - this confirms successful join
           if (message.players && Array.isArray(message.players)) {
             setUsers(
               message.players.map((p: any) => ({
@@ -85,6 +80,15 @@ function Game() {
                 username: p.username,
               }))
             )
+            // Only set isJoined after receiving players list (successful join)
+            if (!isJoined) {
+              setIsJoined(true)
+              setIsConnecting(false)
+              // Generate 3 cards for selection
+              const cards = generateCards(3)
+              setAvailableCards(cards)
+              setShowCardSelection(true)
+            }
           }
           break
         case 'chat':
@@ -114,7 +118,12 @@ function Game() {
           console.log('Number drawn:', message.number)
           break
         case 'error':
+          // Handle error messages (e.g., duplicate nickname)
           console.error('WebSocket error:', message.message)
+          setErrorMessage(message.message || 'An error occurred')
+          setIsConnecting(false)
+          // Disconnect WebSocket and reset state to allow retry
+          setCurrentUserId('')
           break
       }
     },
@@ -123,9 +132,17 @@ function Game() {
     },
     onClose: () => {
       console.log('WebSocket disconnected')
+      if (isConnecting && !isJoined) {
+        // If we were connecting but got disconnected before joining, reset
+        setIsConnecting(false)
+        setCurrentUserId('')
+      }
     },
     onError: (error) => {
       console.error('WebSocket error:', error)
+      setErrorMessage('Connection error. Please try again.')
+      setIsConnecting(false)
+      setCurrentUserId('')
     },
   })
 
@@ -167,14 +184,27 @@ function Game() {
               id="nickname"
               type="text"
               value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              onChange={(e) => {
+                setNickname(e.target.value)
+                setErrorMessage(null) // Clear error when user types
+              }}
               placeholder="Your nickname"
               className="nickname-input"
               required
               autoFocus
+              disabled={isConnecting}
             />
-            <button type="submit" className="nickname-button">
-              Join Game
+            {errorMessage && (
+              <div className="error-message">
+                {errorMessage}
+              </div>
+            )}
+            <button 
+              type="submit" 
+              className="nickname-button"
+              disabled={isConnecting}
+            >
+              {isConnecting ? 'Connecting...' : 'Join Game'}
             </button>
           </form>
         </div>
@@ -209,14 +239,12 @@ function Game() {
               <div className="game-card-container">
                 <div className="game-card-header-section">
                   <h3 className="game-card-title">Your Card</h3>
-                  {!gameStarted && (
-                    <button
-                      onClick={handleChangeCard}
-                      className="change-card-button"
-                    >
-                      Change Card
-                    </button>
-                  )}
+                  <button
+                    onClick={handleChangeCard}
+                    className="change-card-button"
+                  >
+                    Change Card
+                  </button>
                 </div>
                 <PlayerCard card={selectedCard} />
               </div>

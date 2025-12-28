@@ -1,8 +1,8 @@
 package com.tombalator
 
 import com.tombalator.config.Config
-import com.tombalator.game.GameManager
 import com.tombalator.models.*
+import com.tombalator.routing.configureGameRouting
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
 import io.ktor.server.application.*
@@ -33,14 +33,10 @@ data class TestResponse(
     val message: String
 )
 
-@Serializable
-data class CreateGameResponse(
-    val success: Boolean,
-    val gameId: String?,
-    val message: String
-)
-
 fun Application.configureRouting() {
+    // Configure game-related routes
+    configureGameRouting()
+    
     routing {
         get("/") {
             logger.info("GET / - Root endpoint accessed")
@@ -55,52 +51,6 @@ fun Application.configureRouting() {
             logger.info("GET /api/admin/check - Admin check: ${if (isAdmin) "AUTHORIZED" else "UNAUTHORIZED"}")
             
             call.respond(IsAdminResponse(isAdmin))
-        }
-        
-        post("/api/game/create") {
-            logger.info("POST /api/game/create - Game creation requested")
-            
-            // Check admin authentication
-            val apiKey = call.request.header("X-API-Key") 
-                ?: call.request.queryParameters["apiKey"]
-            
-            if (apiKey == null || apiKey != Config.ADMIN_API_KEY) {
-                logger.warn("POST /api/game/create - UNAUTHORIZED: Invalid or missing API key")
-                call.respond(
-                    HttpStatusCode.Unauthorized,
-                    CreateGameResponse(
-                        success = false,
-                        gameId = null,
-                        message = "Unauthorized. Admin API key required."
-                    )
-                )
-                return@post
-            }
-            
-            // Generate and create game with random 4-digit ID
-            val gameId = GameManager.createGame()
-            
-            if (gameId != null) {
-                logger.info("POST /api/game/create - SUCCESS: Game created with ID: $gameId")
-                call.respond(
-                    HttpStatusCode.Created,
-                    CreateGameResponse(
-                        success = true,
-                        gameId = gameId,
-                        message = "Game created successfully."
-                    )
-                )
-            } else {
-                logger.error("POST /api/game/create - FAILED: Unable to generate unique game ID")
-                call.respond(
-                    HttpStatusCode.ServiceUnavailable,
-                    CreateGameResponse(
-                        success = false,
-                        gameId = null,
-                        message = "Unable to generate unique game ID. All IDs may be in use."
-                    )
-                )
-            }
         }
         
         post("/api/test") {

@@ -25,7 +25,14 @@ class WebSocketHandler(
         // Check if game exists
         if (!GameManager.gameExists(gameId)) {
             logger.warn("WebSocket join - Game '$gameId' does not exist. User: ${message.username}")
-            sendError("Game with ID '$gameId' does not exist. Please create the game first.")
+            sendError("Game with ID '$gameId' does not exist.")
+            return
+        }
+        
+        // Check if username is already taken in this game
+        if (WebSocketManager.isUsernameTaken(gameId, message.username)) {
+            logger.warn("WebSocket join - Username '${message.username}' is already taken in game '$gameId'")
+            sendError("Username '${message.username}' is already taken in this game. Please choose a different nickname.")
             return
         }
         

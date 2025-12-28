@@ -177,6 +177,33 @@
   border-color: var(--accent-color);
 }
 
+.nickname-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 0.75rem 1rem;
+  background-color: var(--error-color);
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+  margin-top: 0.5rem;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .nickname-button {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
@@ -190,8 +217,13 @@
   margin-top: 0.5rem;
 }
 
-.nickname-button:hover {
+.nickname-button:hover:not(:disabled) {
   background-color: var(--accent-hover);
+}
+
+.nickname-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
