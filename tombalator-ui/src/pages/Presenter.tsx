@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import './Presenter.css'
 
-const API_BASE_URL = 'http://localhost:3000'
+// Use environment variable or fallback to relative URL (works with nginx proxy)
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 function Presenter() {
   const [isAdmin, setIsAdmin] = useState(false)

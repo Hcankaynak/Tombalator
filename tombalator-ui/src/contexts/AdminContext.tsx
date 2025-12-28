@@ -9,7 +9,8 @@ interface AdminContextType {
 const AdminContext = createContext<AdminContextType | undefined>(undefined)
 
 const ADMIN_API_KEY_STORAGE = 'admin_api_key'
-const API_BASE_URL = 'http://localhost:3000'
+// Use environment variable or fallback to relative URL (works with nginx proxy)
+const API_BASE_URL = import.meta.env.VITE_API_URL || ''
 
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
