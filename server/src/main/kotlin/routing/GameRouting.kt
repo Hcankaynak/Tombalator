@@ -11,6 +11,7 @@ import com.tombalator.models.CloseNumberRequest
 import com.tombalator.models.CloseNumberResponse
 import com.tombalator.models.CardOptionsResponse
 import com.tombalator.models.TombalaCardData
+import com.tombalator.models.ChatMessage
 import com.tombalator.routing.GameRoutingUtils.ResponseType
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
@@ -287,6 +288,22 @@ fun Application.configureGameRouting() {
                     
                     if (canClose) {
                         logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} can be closed (already drawn and exists on card)")
+                        
+                        // Get username for the player who closed the number
+                        val username = WebSocketManager.getUsername(gameId, request.userId) ?: "Unknown"
+                        
+                        // Broadcast system message to all players in the game
+                        val systemMessage = ChatMessage(
+                            userId = "SYSTEM",
+                            username = "SYSTEM",
+                            message = "$username closed number ${request.number}",
+                            timestamp = System.currentTimeMillis()
+                        )
+                        WebSocketManager.broadcastToGame(
+                            gameId,
+                            WebSocketCodec.encode(systemMessage)
+                        )
+                        
                         call.respond(
                             HttpStatusCode.OK,
                             CloseNumberResponse(

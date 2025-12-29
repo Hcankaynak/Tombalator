@@ -79,5 +79,14 @@ object WebSocketManager {
             removeConnection(session)
         }
     }
+
+    /**
+     * Gets the username for a given userId in a game
+     * Returns null if user not found
+     */
+    fun getUsername(gameId: String, userId: String): String? {
+        val connections = getConnectionsForGame(gameId)
+        return connections.find { it.userId == userId }?.username
+    }
 }
 
