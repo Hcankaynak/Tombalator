@@ -100,6 +100,83 @@ object CardGenerator {
             }
         }
         
+        // Step 3: Sort each column so numbers are in ascending order from top to bottom
+        // We need to maintain the constraint that each row has exactly 5 numbers
+        for (colIndex in 0 until 9) {
+            // Collect all numbers in this column with their row indices
+            val columnNumbers = mutableListOf<Pair<Int, Int>>() // (number, rowIndex)
+            for (rowIndex in 0 until 3) {
+                val number = rows[rowIndex][colIndex]
+                if (number != null) {
+                    columnNumbers.add(Pair(number, rowIndex))
+                }
+            }
+            
+            if (columnNumbers.size <= 1) {
+                // Only one or zero numbers, no sorting needed
+                continue
+            }
+            
+            // Sort numbers by value (ascending)
+            val sortedNumbers = columnNumbers.map { it.first }.sorted()
+            
+            // Get the set of rows that originally had numbers in this column
+            val originalRows = columnNumbers.map { it.second }.toSet()
+            
+            // Clear the column
+            for (rowIndex in 0 until 3) {
+                rows[rowIndex][colIndex] = null
+            }
+            
+            // Count numbers in each row (excluding this column)
+            val rowCounts = IntArray(3) { rowIndex ->
+                rows[rowIndex].mapIndexed { idx, value -> if (idx != colIndex && value != null) 1 else 0 }.sum()
+            }
+            
+            // Place sorted numbers in ascending order, starting from top
+            // Try to place in rows that originally had numbers, but ensure ascending order
+            val sortedRowList = originalRows.sorted() // Rows sorted from top to bottom
+            for ((index, number) in sortedNumbers.withIndex()) {
+                var placed = false
+                
+                // Try to place in the row that corresponds to the sorted position
+                // (smallest number in topmost row, etc.)
+                if (index < sortedRowList.size) {
+                    val targetRow = sortedRowList[index]
+                    if (rowCounts[targetRow] < 5) {
+                        rows[targetRow][colIndex] = number
+                        rowCounts[targetRow]++
+                        placed = true
+                    }
+                }
+                
+                // If not placed, find the first available row from top
+                if (!placed) {
+                    for (rowIndex in 0 until 3) {
+                        if (rowCounts[rowIndex] < 5) {
+                            rows[rowIndex][colIndex] = number
+                            rowCounts[rowIndex]++
+                            placed = true
+                            break
+                        }
+                    }
+                }
+            }
+            
+            // Final pass: Ensure strict ascending order by swapping if necessary
+            // This maintains the 5-per-row constraint since we're only swapping within the column
+            for (rowIndex in 0 until 2) {
+                val currentNumber = rows[rowIndex][colIndex]
+                val nextNumber = rows[rowIndex + 1][colIndex]
+                
+                if (currentNumber != null && nextNumber != null && currentNumber > nextNumber) {
+                    // Swap to maintain ascending order
+                    rows[rowIndex][colIndex] = nextNumber
+                    rows[rowIndex + 1][colIndex] = currentNumber
+                }
+            }
+        }
+        
         // Convert to immutable lists
         val finalRows = rows.map { it.toList() }
         
