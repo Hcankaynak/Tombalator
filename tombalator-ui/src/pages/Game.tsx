@@ -5,6 +5,7 @@ import UsersList from '../components/UsersList'
 import CardSelection from '../components/CardSelection'
 import type { TombalaCard } from '../components/CardSelection'
 import PlayerCard from '../components/PlayerCard'
+import WinnerCelebration from '../components/WinnerCelebration'
 import { useWebSocket } from '../hooks/useWebSocket'
 import './Game.css'
 
@@ -55,6 +56,7 @@ function Game() {
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [closedNumbers, setClosedNumbers] = useState<Set<number>>(new Set())
   const [isLoadingCards, setIsLoadingCards] = useState(false)
+  const [winnerName, setWinnerName] = useState<string | null>(null)
 
   // Check if game exists when component mounts or gameId changes
   useEffect(() => {
@@ -152,6 +154,15 @@ function Game() {
         case 'chat':
           // Add chat message (received from server, broadcasted to all)
           if (message.username && message.message) {
+            // Check if this is a win message
+            if (message.username === 'SYSTEM' && message.message.includes('wins the game')) {
+              // Extract winner name from message (format: "username wins the game")
+              const winnerMatch = message.message.match(/^(.+?)\s+wins the game$/)
+              if (winnerMatch && winnerMatch[1]) {
+                setWinnerName(winnerMatch[1])
+              }
+            }
+            
             // Check if message already exists to prevent duplicates
             setMessages((prev) => {
               const messageId = `msg_${message.userId}_${message.timestamp}`
@@ -406,6 +417,12 @@ function Game() {
 
   return (
     <div className="game">
+      {winnerName && (
+        <WinnerCelebration
+          winnerName={winnerName}
+          onClose={() => setWinnerName(null)}
+        />
+      )}
       {isLoadingCards && (
         <div className="game-loading-overlay">
           <div className="game-loading-message">
