@@ -8,6 +8,7 @@ import com.tombalator.models.DrawNumberResponse
 import com.tombalator.models.NumberDrawnMessage
 import com.tombalator.models.CloseNumberRequest
 import com.tombalator.models.CloseNumberResponse
+import com.tombalator.routing.GameRoutingUtils.ResponseType
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
 import com.tombalator.websocket.WebSocketManager
@@ -26,7 +27,7 @@ fun Application.configureGameRouting() {
     routing {
         route("/api/game") {
             get("/{gameId}") {
-                val gameId = call.parameters["gameId"] ?: run {
+                val gameId = GameRoutingUtils.getGameId(call) ?: run {
                     logger.warn("GET /api/game/{gameId} - Missing game ID")
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -51,19 +52,8 @@ fun Application.configureGameRouting() {
                 logger.info("POST /api/game/create - Game creation requested")
                 
                 // Check admin authentication
-                val apiKey = call.request.header("X-API-Key") 
-                    ?: call.request.queryParameters["apiKey"]
-                
-                if (apiKey == null || apiKey != Config.ADMIN_API_KEY) {
+                if (!GameRoutingUtils.validateAdminAuthForCreate(call)) {
                     logger.warn("POST /api/game/create - UNAUTHORIZED: Invalid or missing API key")
-                    call.respond(
-                        HttpStatusCode.Unauthorized,
-                        CreateGameResponse(
-                            success = false,
-                            gameId = null,
-                            message = "Unauthorized. Admin API key required."
-                        )
-                    )
                     return@post
                 }
                 
@@ -94,7 +84,7 @@ fun Application.configureGameRouting() {
             }
             
             post("/{gameId}/draw-number") {
-                val gameId = call.parameters["gameId"] ?: run {
+                val gameId = GameRoutingUtils.getGameId(call) ?: run {
                     logger.warn("POST /api/game/{gameId}/draw-number - Missing game ID")
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -111,35 +101,14 @@ fun Application.configureGameRouting() {
                 logger.info("POST /api/game/$gameId/draw-number - Draw number requested")
                 
                 // Check admin authentication
-                val apiKey = call.request.header("X-API-Key") 
-                    ?: call.request.queryParameters["apiKey"]
-                
-                if (apiKey == null || apiKey != Config.ADMIN_API_KEY) {
+                if (!GameRoutingUtils.validateAdminAuthForDraw(call, gameId)) {
                     logger.warn("POST /api/game/$gameId/draw-number - UNAUTHORIZED: Invalid or missing API key")
-                    call.respond(
-                        HttpStatusCode.Unauthorized,
-                        DrawNumberResponse(
-                            success = false,
-                            number = null,
-                            drawnNumbers = emptyList(),
-                            message = "Unauthorized. Admin API key required."
-                        )
-                    )
                     return@post
                 }
                 
                 // Check if game exists
-                if (!GameManager.gameExists(gameId)) {
+                if (!GameRoutingUtils.validateGameExists(call, gameId, ResponseType.DRAW_NUMBER)) {
                     logger.warn("POST /api/game/$gameId/draw-number - Game does not exist")
-                    call.respond(
-                        HttpStatusCode.NotFound,
-                        DrawNumberResponse(
-                            success = false,
-                            number = null,
-                            drawnNumbers = emptyList(),
-                            message = "Game with ID '$gameId' does not exist."
-                        )
-                    )
                     return@post
                 }
                 
@@ -186,7 +155,7 @@ fun Application.configureGameRouting() {
             }
             
             post("/{gameId}/close-number") {
-                val gameId = call.parameters["gameId"] ?: run {
+                val gameId = GameRoutingUtils.getGameId(call) ?: run {
                     logger.warn("POST /api/game/{gameId}/close-number - Missing game ID")
                     call.respond(
                         HttpStatusCode.BadRequest,
@@ -202,16 +171,8 @@ fun Application.configureGameRouting() {
                 logger.info("POST /api/game/$gameId/close-number - Close number requested")
                 
                 // Check if game exists
-                if (!GameManager.gameExists(gameId)) {
+                if (!GameRoutingUtils.validateGameExists(call, gameId, ResponseType.CLOSE_NUMBER)) {
                     logger.warn("POST /api/game/$gameId/close-number - Game does not exist")
-                    call.respond(
-                        HttpStatusCode.NotFound,
-                        CloseNumberResponse(
-                            success = false,
-                            canClose = false,
-                            message = "Game with ID '$gameId' does not exist."
-                        )
-                    )
                     return@post
                 }
                 
@@ -219,16 +180,8 @@ fun Application.configureGameRouting() {
                     val request = call.receive<CloseNumberRequest>()
                     
                     // Validate number range (1-90)
-                    if (request.number < 1 || request.number > 90) {
+                    if (!GameRoutingUtils.validateNumberRangeWithResponse(call, gameId, request.number)) {
                         logger.warn("POST /api/game/$gameId/close-number - Invalid number: ${request.number}")
-                        call.respond(
-                            HttpStatusCode.BadRequest,
-                            CloseNumberResponse(
-                                success = false,
-                                canClose = false,
-                                message = "Number must be between 1 and 90."
-                            )
-                        )
                         return@post
                     }
                     
