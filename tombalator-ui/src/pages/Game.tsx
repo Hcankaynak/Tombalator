@@ -115,11 +115,12 @@ function Game() {
   }
 
   // WebSocket connection - only connect after user submits nickname
+  // Keep enabled true after joining to maintain connection
   const { isConnected, sendMessage } = useWebSocket({
     gameId: gameId || '',
     userId: currentUserId,
     username: nickname,
-    enabled: isConnecting && !!currentUserId && !!nickname.trim(),
+    enabled: (isConnecting || isJoined) && !!currentUserId && !!nickname.trim(),
     onMessage: (message) => {
       switch (message.type) {
         case 'players_update':

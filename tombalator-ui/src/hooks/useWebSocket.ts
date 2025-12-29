@@ -37,6 +37,21 @@ export function useWebSocket({
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const wasConnectedRef = useRef(false)
+  const prevDepsRef = useRef({ enabled, gameId, userId, username })
+  
+  // Use refs to store callbacks so they don't cause reconnections
+  const onMessageRef = useRef(onMessage)
+  const onErrorRef = useRef(onError)
+  const onOpenRef = useRef(onOpen)
+  const onCloseRef = useRef(onClose)
+  
+  // Update refs when callbacks change (without causing reconnection)
+  useEffect(() => {
+    onMessageRef.current = onMessage
+    onErrorRef.current = onError
+    onOpenRef.current = onOpen
+    onCloseRef.current = onClose
+  }, [onMessage, onError, onOpen, onClose])
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -59,13 +74,13 @@ export function useWebSocket({
             username,
           })
         )
-        onOpen?.()
+        onOpenRef.current?.()
       }
 
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as WebSocketMessage
-          onMessage?.(message)
+          onMessageRef.current?.(message)
         } catch (error) {
           console.error('Error parsing WebSocket message:', error)
         }
@@ -73,12 +88,12 @@ export function useWebSocket({
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error)
-        onError?.(error)
+        onErrorRef.current?.(error)
       }
 
       ws.onclose = () => {
         setIsConnected(false)
-        onClose?.()
+        onCloseRef.current?.()
         
         // Only attempt to reconnect if we were previously successfully connected
         // This prevents reconnection when join is rejected (e.g., duplicate nickname)
@@ -95,7 +110,7 @@ export function useWebSocket({
     } catch (error) {
       console.error('Error creating WebSocket:', error)
     }
-  }, [gameId, userId, username, enabled, onMessage, onError, onOpen, onClose])
+  }, [gameId, userId, username, enabled])
 
   const sendMessage = useCallback((message: WebSocketMessage) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -111,7 +126,10 @@ export function useWebSocket({
       reconnectTimeoutRef.current = null
     }
     if (wsRef.current) {
-      wsRef.current.close()
+      // Only close if not already closed
+      if (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING) {
+        wsRef.current.close()
+      }
       wsRef.current = null
     }
     setIsConnected(false)
@@ -119,15 +137,40 @@ export function useWebSocket({
   }, [])
 
   useEffect(() => {
+    const prevDeps = prevDepsRef.current
+    const depsChanged = 
+      prevDeps.enabled !== enabled ||
+      prevDeps.gameId !== gameId ||
+      prevDeps.userId !== userId ||
+      prevDeps.username !== username
+    
+    // Update previous deps
+    prevDepsRef.current = { enabled, gameId, userId, username }
+    
     if (enabled && gameId && userId && username) {
-      connect()
+      // Only connect if not already connected or if dependencies changed
+      if (wsRef.current?.readyState !== WebSocket.OPEN) {
+        // If we were connected with different deps, disconnect first
+        if (depsChanged && wsRef.current) {
+          disconnect()
+        }
+        connect()
+      }
     } else {
-      disconnect()
+      // Only disconnect if actually connected
+      if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
+        disconnect()
+      }
     }
 
     return () => {
-      disconnect()
+      // Cleanup: only disconnect if enabled became false or deps changed to invalid values
+      const shouldDisconnect = !enabled || !gameId || !userId || !username
+      if (shouldDisconnect && (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING)) {
+        disconnect()
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, gameId, userId, username])
 
   return {

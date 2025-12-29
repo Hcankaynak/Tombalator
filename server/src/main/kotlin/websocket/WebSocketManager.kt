@@ -4,6 +4,7 @@ import io.ktor.websocket.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 data class ConnectionInfo(
@@ -12,50 +13,52 @@ data class ConnectionInfo(
     val userId: String,
     val username: String
 )
+private val logger = LoggerFactory.getLogger("com.tombalator.websocket.WebSocketManager")
 
 object WebSocketManager {
     // Map of gameId -> Set of connections
     private val gameConnections = ConcurrentHashMap<String, MutableSet<ConnectionInfo>>()
-    
+
     // Map of session -> ConnectionInfo for quick lookup
     private val sessionToConnection = ConcurrentHashMap<DefaultWebSocketSession, ConnectionInfo>()
-    
+
     fun addConnection(gameId: String, userId: String, username: String, session: DefaultWebSocketSession) {
         val connection = ConnectionInfo(session, gameId, userId, username)
-        
+
         gameConnections.getOrPut(gameId) { mutableSetOf() }.add(connection)
         sessionToConnection[session] = connection
+        logger.info("Adding connection for user: $username")
     }
-    
+
     fun removeConnection(session: DefaultWebSocketSession) {
         val connection = sessionToConnection.remove(session) ?: return
-        
+
         gameConnections[connection.gameId]?.remove(connection)
-        
+
         // Clean up empty game sets
         if (gameConnections[connection.gameId]?.isEmpty() == true) {
             gameConnections.remove(connection.gameId)
         }
     }
-    
+
     fun getConnectionsForGame(gameId: String): Set<ConnectionInfo> {
         return gameConnections[gameId]?.toSet() ?: emptySet()
     }
-    
+
     /**
      * Checks if a username already exists in the game (case-insensitive)
      */
     fun isUsernameTaken(gameId: String, username: String): Boolean {
         val connections = getConnectionsForGame(gameId)
-        return connections.any { 
-            it.username.equals(username, ignoreCase = true) 
+        return connections.any {
+            it.username.equals(username, ignoreCase = true)
         }
     }
-    
+
     fun getAllConnections(): Set<ConnectionInfo> {
         return sessionToConnection.values.toSet()
     }
-    
+
     suspend fun broadcastToGame(gameId: String, message: String) {
         val connections = getConnectionsForGame(gameId)
         connections.forEach { connection ->
@@ -63,11 +66,12 @@ object WebSocketManager {
                 connection.session.send(Frame.Text(message))
             } catch (e: Exception) {
                 // Connection might be closed, remove it
+                logger.error(e.message)
                 removeConnection(connection.session)
             }
         }
     }
-    
+
     suspend fun sendToUser(session: DefaultWebSocketSession, message: String) {
         try {
             session.send(Frame.Text(message))

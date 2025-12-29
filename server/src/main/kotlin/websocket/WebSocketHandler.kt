@@ -25,7 +25,7 @@ class WebSocketHandler(
         // Check if game exists
         if (!GameManager.gameExists(gameId)) {
             logger.warn("WebSocket join - Game '$gameId' does not exist. User: ${message.username}")
-            sendError("Game with ID '$gameId' does not exist.")
+            sendError("Game with ID '$gameId' does not exist. Please create the game first.")
             return
         }
         
