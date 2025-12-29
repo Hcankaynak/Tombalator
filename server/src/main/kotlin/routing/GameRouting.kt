@@ -391,6 +391,24 @@ fun Application.configureGameRouting() {
                             )
                         }
                         
+                        // Check if user won the game (closed all numbers)
+                        val hasWon = GameManager.checkGameWin(gameId, request.userId)
+                        if (hasWon) {
+                            logger.info("POST /api/game/$gameId/close-number - User $username won the game!")
+                            
+                            // Broadcast win message
+                            val winMessage = ChatMessage(
+                                userId = "SYSTEM",
+                                username = "SYSTEM",
+                                message = "$username wins the game",
+                                timestamp = System.currentTimeMillis()
+                            )
+                            WebSocketManager.broadcastToGame(
+                                gameId,
+                                WebSocketCodec.encode(winMessage)
+                            )
+                        }
+                        
                         call.respond(
                             HttpStatusCode.OK,
                             CloseNumberResponse(

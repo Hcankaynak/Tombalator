@@ -14,7 +14,8 @@ data class Game(
     val drawnNumbers: MutableSet<Int> = mutableSetOf(),
     val userCards: MutableMap<String, TombalaCard> = ConcurrentHashMap(), // userId -> card
     val userClosedNumbers: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap(), // userId -> closed numbers
-    val userCompletedRows: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap() // userId -> completed row indices (0-2)
+    val userCompletedRows: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap(), // userId -> completed row indices (0-2)
+    val gameWinners: MutableSet<String> = ConcurrentHashMap.newKeySet() // userIds who have won the game
 )
 
 object GameManager {
@@ -238,6 +239,49 @@ object GameManager {
     fun clearCompletedRowsForUser(gameId: String, userId: String): Boolean {
         val game = games[gameId] ?: return false
         game.userCompletedRows[userId]?.clear()
+        return true
+    }
+
+    /**
+     * Checks if a user has closed all numbers on their card (won the game)
+     * Returns true if the user has won and hasn't been announced yet, false otherwise
+     */
+    fun checkGameWin(gameId: String, userId: String): Boolean {
+        val game = games[gameId] ?: return false
+        val userCard = game.userCards[userId] ?: return false
+        val closedNumbers = game.userClosedNumbers[userId] ?: return false
+
+        // Check if user has already won
+        if (game.gameWinners.contains(userId)) {
+            return false // Already announced as winner
+        }
+
+        // Get all numbers on the card (excluding nulls)
+        val allCardNumbers = userCard.rows.flatMap { row ->
+            row.filterNotNull()
+        }
+
+        // Check if all numbers on the card are closed
+        val allClosed = allCardNumbers.isNotEmpty() && allCardNumbers.all { number ->
+            closedNumbers.contains(number)
+        }
+
+        if (allClosed) {
+            // Mark user as winner
+            game.gameWinners.add(userId)
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Clears win status for a user (e.g., when they change card)
+     * Returns true if cleared successfully, false if game doesn't exist
+     */
+    fun clearWinForUser(gameId: String, userId: String): Boolean {
+        val game = games[gameId] ?: return false
+        game.gameWinners.remove(userId)
         return true
     }
 }
