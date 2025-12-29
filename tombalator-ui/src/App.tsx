@@ -3,6 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { AdminProvider } from './contexts/AdminContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import DevToolsDetector from './components/DevToolsDetector'
 import Home from './pages/Home'
 import Game from './pages/Game'
 import Presenter from './pages/Presenter'
@@ -14,6 +15,7 @@ function App() {
       <AdminProvider>
         <Router>
           <div className="app">
+            <DevToolsDetector />
             <Navbar />
             <main className="main-content">
               <Routes>
