@@ -27,7 +27,7 @@ object GameRoutingUtils {
         if (gameId == null) {
             call.respond(
                 HttpStatusCode.BadRequest,
-                GameExistsResponse(exists = false, gameId = "")
+                GameExistsResponse(exists = false, gameId = "", hasStarted = false)
             )
             return false
         }
@@ -140,7 +140,7 @@ object GameRoutingUtils {
                 ResponseType.GENERIC -> {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        GameExistsResponse(exists = false, gameId = gameId)
+                        GameExistsResponse(exists = false, gameId = gameId, hasStarted = false)
                     )
                 }
             }

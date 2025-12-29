@@ -29,6 +29,14 @@ class WebSocketHandler(
             return
         }
         
+        // Check if game has already started (numbers have been drawn)
+        val drawnNumbers = GameManager.getDrawnNumbers(gameId)
+        if (drawnNumbers.isNotEmpty()) {
+            logger.warn("WebSocket join - Game '$gameId' has already started. User: ${message.username}, Drawn numbers: ${drawnNumbers.size}")
+            sendError("This game has already started. You cannot join a game in progress.")
+            return
+        }
+        
         // Check if username is already taken in this game
         if (WebSocketManager.isUsernameTaken(gameId, message.username)) {
             logger.warn("WebSocket join - Username '${message.username}' is already taken in game '$gameId'")

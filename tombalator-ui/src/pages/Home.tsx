@@ -9,6 +9,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'htt
 interface GameExistsResponse {
   exists: boolean
   gameId: string
+  hasStarted?: boolean
 }
 
 function Home() {
@@ -38,8 +39,13 @@ function Home() {
       const data: GameExistsResponse = await response.json()
 
       if (data.exists) {
-        // Game exists, redirect to game page
-        navigate(`/game/${trimmedGameId}`)
+        // Check if game has already started
+        if (data.hasStarted) {
+          setErrorMessage(`This game has already started. You cannot join a game in progress.`)
+        } else {
+          // Game exists and hasn't started, redirect to game page
+          navigate(`/game/${trimmedGameId}`)
+        }
       } else {
         // Game doesn't exist
         setErrorMessage(`Game with ID "${trimmedGameId}" does not exist. Please check the game ID and try again.`)

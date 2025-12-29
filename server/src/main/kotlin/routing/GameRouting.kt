@@ -36,21 +36,27 @@ fun Application.configureGameRouting() {
                     logger.warn("GET /api/game/{gameId} - Missing game ID")
                     call.respond(
                         HttpStatusCode.BadRequest,
-                        GameExistsResponse(exists = false, gameId = "")
+                        GameExistsResponse(exists = false, gameId = "", hasStarted = false)
                     )
                     return@get
                 }
                 
                 logger.info("GET /api/game/$gameId - Checking if game exists")
                 val exists = GameManager.gameExists(gameId)
+                val hasStarted = if (exists) {
+                    val drawnNumbers = GameManager.getDrawnNumbers(gameId)
+                    drawnNumbers.isNotEmpty()
+                } else {
+                    false
+                }
                 
                 if (exists) {
-                    logger.info("GET /api/game/$gameId - Game exists")
+                    logger.info("GET /api/game/$gameId - Game exists, hasStarted=$hasStarted")
                 } else {
                     logger.info("GET /api/game/$gameId - Game does not exist")
                 }
                 
-                call.respond(GameExistsResponse(exists = exists, gameId = gameId))
+                call.respond(GameExistsResponse(exists = exists, gameId = gameId, hasStarted = hasStarted))
             }
             
             get("/{gameId}/card-options") {

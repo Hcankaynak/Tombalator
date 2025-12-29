@@ -96,7 +96,8 @@ data class CreateGameResponse(
 @Serializable
 data class GameExistsResponse(
     val exists: Boolean,
-    val gameId: String
+    val gameId: String,
+    val hasStarted: Boolean = false // true if game has started (numbers have been drawn)
 )
 
 @Serializable
