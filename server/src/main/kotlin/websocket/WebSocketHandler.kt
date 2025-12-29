@@ -192,8 +192,25 @@ class WebSocketHandler(
         return userId != null && username != null
     }
     
-    fun cleanup() {
-        WebSocketManager.removeConnection(session)
+    suspend fun cleanup() {
+        val currentUserId = userId
+        val currentUsername = username
+        
+        if (currentUserId != null && currentUsername != null) {
+            logger.info("WebSocket cleanup - User '$currentUsername' disconnected from game '$gameId'")
+            
+            // Remove connection
+            WebSocketManager.removeConnection(session)
+            
+            // Remove user's card when they disconnect
+            GameManager.removeUserCard(gameId, currentUserId)
+            
+            // Broadcast updated players list to remaining players
+            broadcastPlayersUpdate()
+        } else {
+            // User was never authenticated, just remove the connection
+            WebSocketManager.removeConnection(session)
+        }
     }
 }
 

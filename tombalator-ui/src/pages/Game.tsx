@@ -113,11 +113,11 @@ function Game() {
       setIsConnecting(true)
       
       // Save nickname to localStorage
-      localStorage.setItem(NICKNAME_STORAGE_KEY, nickname.trim())
+      const trimmedNickname = nickname.trim()
+      localStorage.setItem(NICKNAME_STORAGE_KEY, trimmedNickname)
       
-      // Generate user ID
-      const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      setCurrentUserId(userId)
+      // Use username as userId (username is unique per game)
+      setCurrentUserId(trimmedNickname)
       
       // Note: isJoined will be set to true only after successful WebSocket join
       // (when we receive players_update message)
@@ -269,13 +269,6 @@ function Game() {
     }
   }
 
-  const handleChangeCard = () => {
-    // Fetch new cards from backend
-    fetchCardOptions()
-    // Reset closed numbers when changing card
-    setClosedNumbers(new Set())
-    // Note: When user selects a new card, handleCardSelect will send it to backend
-  }
 
   const handleNumberClick = async (number: number) => {
     // If number is already closed, don't allow unmarking (one-way action)
@@ -434,6 +427,8 @@ function Game() {
         <CardSelection
           cards={availableCards}
           onSelectCard={handleCardSelect}
+          onRefresh={fetchCardOptions}
+          isRefreshing={isLoadingCards}
         />
       )}
       <div className="game-container-joined">
@@ -453,15 +448,7 @@ function Game() {
           <div className="game-center">
             {selectedCard ? (
               <div className="game-card-container">
-                <div className="game-card-header-section">
-                  <h3 className="game-card-title">Your Card</h3>
-                  <button
-                    onClick={handleChangeCard}
-                    className="change-card-button"
-                  >
-                    Change Card
-                  </button>
-                </div>
+                <h3 className="game-card-title">Your Card</h3>
                 <PlayerCard 
                   card={selectedCard} 
                   markedNumbers={closedNumbers}

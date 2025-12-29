@@ -123,35 +123,11 @@
   margin: 0 auto;
 }
 
-.game-card-header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 0.5rem;
-}
-
 .game-card-title {
-  margin: 0;
+  margin: 0 0 1rem 0;
   color: var(--text-primary);
   font-size: 1.5rem;
   transition: color 0.3s ease;
-}
-
-.change-card-button {
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 1px solid var(--accent-color);
-  border-radius: 8px;
-  background-color: transparent;
-  color: var(--accent-color);
-  cursor: pointer;
-  transition: all 0.25s;
-}
-
-.change-card-button:hover {
-  background-color: var(--accent-color);
-  color: #fff;
 }
 
 .game-card-placeholder {

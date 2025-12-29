@@ -24,6 +24,14 @@
   transition: background-color 0.3s ease;
 }
 
+.card-selection-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
 .card-selection-title {
   margin: 0 0 0.5rem 0;
   color: var(--text-primary);
@@ -33,10 +41,49 @@
 }
 
 .card-selection-subtitle {
-  margin: 0 0 2rem 0;
+  margin: 0;
   color: var(--text-secondary);
   text-align: center;
   transition: color 0.3s ease;
+}
+
+.refresh-cards-button {
+  padding: 0.75rem;
+  font-size: 1.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 3rem;
+  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.refresh-cards-button:hover:not(:disabled) {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+  transform: rotate(180deg);
+}
+
+.refresh-cards-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .cards-grid {

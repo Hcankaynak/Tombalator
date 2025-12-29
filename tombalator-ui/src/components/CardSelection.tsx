@@ -10,9 +10,11 @@ export interface TombalaCard {
 interface CardSelectionProps {
   cards: TombalaCard[]
   onSelectCard: (card: TombalaCard) => void
+  onRefresh?: () => void
+  isRefreshing?: boolean
 }
 
-function CardSelection({ cards, onSelectCard }: CardSelectionProps) {
+function CardSelection({ cards, onSelectCard, onRefresh, isRefreshing = false }: CardSelectionProps) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null)
 
   const handleSelect = (card: TombalaCard) => {
@@ -26,11 +28,30 @@ function CardSelection({ cards, onSelectCard }: CardSelectionProps) {
     }
   }
 
+  const handleRefresh = () => {
+    setSelectedCardId(null) // Clear selection when refreshing
+    onRefresh?.()
+  }
+
   return (
     <div className="card-selection-overlay">
       <div className="card-selection-modal">
-        <h2 className="card-selection-title">Select Your Card</h2>
-        <p className="card-selection-subtitle">Choose one card to play with</p>
+        <div className="card-selection-header">
+          <div>
+            <h2 className="card-selection-title">Select Your Card</h2>
+            <p className="card-selection-subtitle">Choose one card to play with</p>
+          </div>
+          {onRefresh && (
+            <button
+              className="refresh-cards-button"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              title="Refresh cards"
+            >
+              {isRefreshing ? '⟳' : '↻'}
+            </button>
+          )}
+        </div>
         <div className="cards-grid">
           {cards.map((card) => (
             <div
