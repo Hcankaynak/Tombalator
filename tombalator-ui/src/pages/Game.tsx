@@ -5,7 +5,6 @@ import UsersList from '../components/UsersList'
 import CardSelection from '../components/CardSelection'
 import type { TombalaCard } from '../components/CardSelection'
 import PlayerCard from '../components/PlayerCard'
-import { generateCards } from '../utils/cardGenerator'
 import { useWebSocket } from '../hooks/useWebSocket'
 import './Game.css'
 
@@ -18,6 +17,12 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'htt
 interface GameExistsResponse {
   exists: boolean
   gameId: string
+}
+
+interface CardOptionsResponse {
+  success: boolean
+  cards: TombalaCard[]
+  message: string
 }
 
 interface Message {
@@ -49,6 +54,7 @@ function Game() {
   const [gameExists, setGameExists] = useState(false)
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
   const [closedNumbers, setClosedNumbers] = useState<Set<number>>(new Set())
+  const [isLoadingCards, setIsLoadingCards] = useState(false)
 
   // Check if game exists when component mounts or gameId changes
   useEffect(() => {
@@ -138,10 +144,8 @@ function Game() {
             if (!isJoined) {
               setIsJoined(true)
               setIsConnecting(false)
-              // Generate 3 cards for selection
-              const cards = generateCards(3)
-              setAvailableCards(cards)
-              setShowCardSelection(true)
+              // Fetch card options from backend
+              fetchCardOptions()
             }
           }
           break
@@ -223,11 +227,40 @@ function Game() {
     }
   }
 
+  const fetchCardOptions = async () => {
+    if (!gameId) {
+      return
+    }
+
+    setIsLoadingCards(true)
+    setErrorMessage(null)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/card-options`)
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch card options')
+      }
+
+      const data: CardOptionsResponse = await response.json()
+
+      if (data.success && data.cards) {
+        setAvailableCards(data.cards)
+        setShowCardSelection(true)
+      } else {
+        setErrorMessage(data.message || 'Failed to load card options')
+      }
+    } catch (error) {
+      console.error('Error fetching card options:', error)
+      setErrorMessage('Failed to load card options. Please try again.')
+    } finally {
+      setIsLoadingCards(false)
+    }
+  }
+
   const handleChangeCard = () => {
-    // Generate new cards for selection
-    const cards = generateCards(3)
-    setAvailableCards(cards)
-    setShowCardSelection(true)
+    // Fetch new cards from backend
+    fetchCardOptions()
     // Reset closed numbers when changing card
     setClosedNumbers(new Set())
     // Note: When user selects a new card, handleCardSelect will send it to backend
@@ -239,7 +272,7 @@ function Game() {
       return
     }
 
-    if (!gameId) {
+    if (!gameId || !currentUserId) {
       return
     }
 
@@ -250,7 +283,7 @@ function Game() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ number }),
+        body: JSON.stringify({ number, userId: currentUserId }),
       })
 
       if (!response.ok) {
@@ -373,7 +406,14 @@ function Game() {
 
   return (
     <div className="game">
-      {showCardSelection && (
+      {isLoadingCards && (
+        <div className="game-loading-overlay">
+          <div className="game-loading-message">
+            <p>Loading card options...</p>
+          </div>
+        </div>
+      )}
+      {showCardSelection && !isLoadingCards && (
         <CardSelection
           cards={availableCards}
           onSelectCard={handleCardSelect}

@@ -2,12 +2,15 @@ package com.tombalator.routing
 
 import com.tombalator.config.Config
 import com.tombalator.game.GameManager
+import com.tombalator.game.CardGenerator
 import com.tombalator.models.CreateGameResponse
 import com.tombalator.models.GameExistsResponse
 import com.tombalator.models.DrawNumberResponse
 import com.tombalator.models.NumberDrawnMessage
 import com.tombalator.models.CloseNumberRequest
 import com.tombalator.models.CloseNumberResponse
+import com.tombalator.models.CardOptionsResponse
+import com.tombalator.models.TombalaCardData
 import com.tombalator.routing.GameRoutingUtils.ResponseType
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
@@ -46,6 +49,52 @@ fun Application.configureGameRouting() {
                 }
                 
                 call.respond(GameExistsResponse(exists = exists, gameId = gameId))
+            }
+            
+            get("/{gameId}/card-options") {
+                val gameId = GameRoutingUtils.getGameId(call) ?: run {
+                    logger.warn("GET /api/game/{gameId}/card-options - Missing game ID")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        CardOptionsResponse(
+                            success = false,
+                            cards = emptyList(),
+                            message = "Missing game ID"
+                        )
+                    )
+                    return@get
+                }
+                
+                logger.info("GET /api/game/$gameId/card-options - Card options requested")
+                
+                // Check if game exists
+                if (!GameRoutingUtils.validateGameExists(call, gameId, ResponseType.GENERIC)) {
+                    logger.warn("GET /api/game/$gameId/card-options - Game does not exist")
+                    return@get
+                }
+                
+                // Generate 3 random cards
+                val cards = CardGenerator.generateCards(3)
+                
+                // Convert to TombalaCardData for response
+                val cardData = cards.map { card ->
+                    TombalaCardData(
+                        id = card.id,
+                        rows = card.rows,
+                        theme = card.theme
+                    )
+                }
+                
+                logger.info("GET /api/game/$gameId/card-options - SUCCESS: Generated ${cards.size} cards")
+                
+                call.respond(
+                    HttpStatusCode.OK,
+                    CardOptionsResponse(
+                        success = true,
+                        cards = cardData,
+                        message = "Cards generated successfully."
+                    )
+                )
             }
             
             post("/create") {
@@ -179,9 +228,56 @@ fun Application.configureGameRouting() {
                 try {
                     val request = call.receive<CloseNumberRequest>()
                     
+                    // Validate userId is provided
+                    if (request.userId.isBlank()) {
+                        logger.warn("POST /api/game/$gameId/close-number - Missing userId")
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            CloseNumberResponse(
+                                success = false,
+                                canClose = false,
+                                message = "User ID is required."
+                            )
+                        )
+                        return@post
+                    }
+                    
                     // Validate number range (1-90)
                     if (!GameRoutingUtils.validateNumberRangeWithResponse(call, gameId, request.number)) {
                         logger.warn("POST /api/game/$gameId/close-number - Invalid number: ${request.number}")
+                        return@post
+                    }
+                    
+                    // Get user's card
+                    val userCard = GameManager.getUserCard(gameId, request.userId)
+                    if (userCard == null) {
+                        logger.warn("POST /api/game/$gameId/close-number - User ${request.userId} does not have a card")
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            CloseNumberResponse(
+                                success = false,
+                                canClose = false,
+                                message = "You must select a card before closing numbers."
+                            )
+                        )
+                        return@post
+                    }
+                    
+                    // Check if the number exists on the user's card
+                    val numberExistsOnCard = userCard.rows.any { row ->
+                        row.any { cell -> cell == request.number }
+                    }
+                    
+                    if (!numberExistsOnCard) {
+                        logger.info("POST /api/game/$gameId/close-number - FAILED: Number ${request.number} does not exist on user's card")
+                        call.respond(
+                            HttpStatusCode.OK,
+                            CloseNumberResponse(
+                                success = true,
+                                canClose = false,
+                                message = "Number cannot be closed. It does not exist on your card."
+                            )
+                        )
                         return@post
                     }
                     
@@ -190,7 +286,7 @@ fun Application.configureGameRouting() {
                     val canClose = drawnNumbers.contains(request.number)
                     
                     if (canClose) {
-                        logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} can be closed (already drawn)")
+                        logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} can be closed (already drawn and exists on card)")
                         call.respond(
                             HttpStatusCode.OK,
                             CloseNumberResponse(

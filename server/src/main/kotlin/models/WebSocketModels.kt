@@ -101,7 +101,8 @@ data class GameExistsResponse(
 
 @Serializable
 data class CloseNumberRequest(
-    val number: Int
+    val number: Int,
+    val userId: String
 )
 
 @Serializable
@@ -116,6 +117,13 @@ data class DrawNumberResponse(
     val success: Boolean,
     val number: Int?,
     val drawnNumbers: List<Int>,
+    val message: String
+)
+
+@Serializable
+data class CardOptionsResponse(
+    val success: Boolean,
+    val cards: List<TombalaCardData>,
     val message: String
 )
 
