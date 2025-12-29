@@ -94,15 +94,18 @@ class WebSocketHandler(
     }
     
     suspend fun handleSelectCard(message: SelectCardMessage) {
-        if (userId == null || username == null) {
+        val currentUserId = userId
+        val currentUsername = username
+        
+        if (currentUserId == null || currentUsername == null) {
             logger.warn("WebSocket select_card - Unauthenticated user attempted to select card in game '$gameId'")
             sendError("Not authenticated. Please join game first.")
             return
         }
         
         // Validate that the message userId matches the current user
-        if (message.userId != userId) {
-            logger.warn("WebSocket select_card - User ID mismatch. Expected: $userId, got: ${message.userId}")
+        if (message.userId != currentUserId) {
+            logger.warn("WebSocket select_card - User ID mismatch. Expected: $currentUserId, got: ${message.userId}")
             sendError("User ID mismatch.")
             return
         }
@@ -115,16 +118,17 @@ class WebSocketHandler(
         )
         
         // Store the card in GameManager
-        val success = GameManager.setUserCard(gameId, userId!!, card)
+        val success = GameManager.setUserCard(gameId, currentUserId, card)
         
         if (success) {
-            // Clear closed numbers when user selects/changes card
-            GameManager.clearClosedNumbersForUser(gameId, userId)
-            logger.info("WebSocket select_card - User '${username}' selected card '${card.id}' in game '$gameId' (closed numbers cleared)")
+            // Clear closed numbers and completed rows when user selects/changes card
+            GameManager.clearClosedNumbersForUser(gameId, currentUserId)
+            GameManager.clearCompletedRowsForUser(gameId, currentUserId)
+            logger.info("WebSocket select_card - User '$currentUsername' selected card '${card.id}' in game '$gameId' (closed numbers and completed rows cleared)")
             // Optionally send a confirmation message back
             // For now, we'll just log it
         } else {
-            logger.warn("WebSocket select_card - Failed to store card for user '${username}' in game '$gameId'")
+            logger.warn("WebSocket select_card - Failed to store card for user '$currentUsername' in game '$gameId'")
             sendError("Failed to store card. Game may not exist.")
         }
     }

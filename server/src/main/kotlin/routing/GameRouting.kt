@@ -361,8 +361,8 @@ fun Application.configureGameRouting() {
                         // Get username for the player who closed the number
                         val username = WebSocketManager.getUsername(gameId, request.userId) ?: "Unknown"
                         
-                        // Broadcast system message to all players in the game
-                        val systemMessage = ChatMessage(
+                        // Broadcast system message about closing the number
+                        val closeMessage = ChatMessage(
                             userId = "SYSTEM",
                             username = "SYSTEM",
                             message = "$username closed number ${request.number}",
@@ -370,8 +370,26 @@ fun Application.configureGameRouting() {
                         )
                         WebSocketManager.broadcastToGame(
                             gameId,
-                            WebSocketCodec.encode(systemMessage)
+                            WebSocketCodec.encode(closeMessage)
                         )
+                        
+                        // Check if user completed a row (çinko)
+                        val completedRowIndex = GameManager.checkCompletedRow(gameId, request.userId)
+                        if (completedRowIndex != null) {
+                            logger.info("POST /api/game/$gameId/close-number - User $username completed a çinko (row ${completedRowIndex + 1})")
+                            
+                            // Broadcast çinko message
+                            val cinkoMessage = ChatMessage(
+                                userId = "SYSTEM",
+                                username = "SYSTEM",
+                                message = "$username completed a çinko",
+                                timestamp = System.currentTimeMillis()
+                            )
+                            WebSocketManager.broadcastToGame(
+                                gameId,
+                                WebSocketCodec.encode(cinkoMessage)
+                            )
+                        }
                         
                         call.respond(
                             HttpStatusCode.OK,
