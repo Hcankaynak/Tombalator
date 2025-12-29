@@ -4,8 +4,11 @@ import com.tombalator.config.Config
 import com.tombalator.game.GameManager
 import com.tombalator.models.CreateGameResponse
 import com.tombalator.models.GameExistsResponse
+import com.tombalator.models.DrawNumberResponse
+import com.tombalator.models.NumberDrawnMessage
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
+import com.tombalator.websocket.WebSocketManager
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -83,6 +86,98 @@ fun Application.configureGameRouting() {
                             success = false,
                             gameId = null,
                             message = "Unable to generate unique game ID. All IDs may be in use."
+                        )
+                    )
+                }
+            }
+            
+            post("/{gameId}/draw-number") {
+                val gameId = call.parameters["gameId"] ?: run {
+                    logger.warn("POST /api/game/{gameId}/draw-number - Missing game ID")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        DrawNumberResponse(
+                            success = false,
+                            number = null,
+                            drawnNumbers = emptyList(),
+                            message = "Missing game ID"
+                        )
+                    )
+                    return@post
+                }
+                
+                logger.info("POST /api/game/$gameId/draw-number - Draw number requested")
+                
+                // Check admin authentication
+                val apiKey = call.request.header("X-API-Key") 
+                    ?: call.request.queryParameters["apiKey"]
+                
+                if (apiKey == null || apiKey != Config.ADMIN_API_KEY) {
+                    logger.warn("POST /api/game/$gameId/draw-number - UNAUTHORIZED: Invalid or missing API key")
+                    call.respond(
+                        HttpStatusCode.Unauthorized,
+                        DrawNumberResponse(
+                            success = false,
+                            number = null,
+                            drawnNumbers = emptyList(),
+                            message = "Unauthorized. Admin API key required."
+                        )
+                    )
+                    return@post
+                }
+                
+                // Check if game exists
+                if (!GameManager.gameExists(gameId)) {
+                    logger.warn("POST /api/game/$gameId/draw-number - Game does not exist")
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        DrawNumberResponse(
+                            success = false,
+                            number = null,
+                            drawnNumbers = emptyList(),
+                            message = "Game with ID '$gameId' does not exist."
+                        )
+                    )
+                    return@post
+                }
+                
+                // Draw a random number (1-90)
+                val drawnNumber = GameManager.drawNumber(gameId)
+                
+                if (drawnNumber != null) {
+                    val allDrawnNumbers = GameManager.getDrawnNumbers(gameId)
+                    
+                    logger.info("POST /api/game/$gameId/draw-number - SUCCESS: Number $drawnNumber drawn. Total drawn: ${allDrawnNumbers.size}")
+                    
+                    // Broadcast the drawn number to all players in the game via WebSocket
+                    val numberDrawnMessage = NumberDrawnMessage(
+                        number = drawnNumber,
+                        drawnNumbers = allDrawnNumbers
+                    )
+                    WebSocketManager.broadcastToGame(
+                        gameId,
+                        WebSocketCodec.encode(numberDrawnMessage)
+                    )
+                    
+                    call.respond(
+                        HttpStatusCode.OK,
+                        DrawNumberResponse(
+                            success = true,
+                            number = drawnNumber,
+                            drawnNumbers = allDrawnNumbers,
+                            message = "Number drawn successfully."
+                        )
+                    )
+                } else {
+                    logger.warn("POST /api/game/$gameId/draw-number - FAILED: All numbers (1-90) have been drawn")
+                    val allDrawnNumbers = GameManager.getDrawnNumbers(gameId)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        DrawNumberResponse(
+                            success = false,
+                            number = null,
+                            drawnNumbers = allDrawnNumbers,
+                            message = "All numbers (1-90) have already been drawn."
                         )
                     )
                 }

@@ -24,38 +24,65 @@ function Presenter() {
     }
   }, [])
 
-  const selectRandomNumber = () => {
-    if (availableNumbers.length === 0 || isSelecting) return
+  const selectRandomNumber = async () => {
+    if (availableNumbers.length === 0 || isSelecting || !gameId) return
 
     setIsSelecting(true)
     
     // Mystery animation - shuffle through numbers
     const animationDuration = 2000 // 2 seconds
     const shuffleInterval = 50 // Change number every 50ms
-    const iterations = animationDuration / shuffleInterval
-    let currentIteration = 0
 
     const shuffleIntervalId = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * availableNumbers.length)
       setCurrentNumber(availableNumbers[randomIndex])
-      currentIteration++
-
-      if (currentIteration >= iterations) {
-        clearInterval(shuffleIntervalId)
-        
-        // Select final number
-        const finalIndex = Math.floor(Math.random() * availableNumbers.length)
-        const selectedNumber = availableNumbers[finalIndex]
-        
-        setCurrentNumber(selectedNumber)
-        setDrawnNumbers((prev) => [...prev, selectedNumber])
-        setAvailableNumbers((prev) => prev.filter((n) => n !== selectedNumber))
-        setIsSelecting(false)
-        
-        // TODO: Send to backend/WebSocket
-        console.log('Selected number:', selectedNumber)
-      }
     }, shuffleInterval)
+
+    try {
+      const savedApiKey = localStorage.getItem('admin_api_key')
+      if (!savedApiKey) {
+        alert('Admin API key not found. Please authenticate first.')
+        clearInterval(shuffleIntervalId)
+        setIsSelecting(false)
+        setCurrentNumber(null)
+        return
+      }
+
+      // Call backend to draw number
+      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/draw-number`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': savedApiKey,
+        },
+      })
+
+      const data = await response.json()
+
+      // Wait for animation to complete
+      setTimeout(() => {
+        clearInterval(shuffleIntervalId)
+
+        if (data.success && data.number !== null) {
+          // Update state with backend response
+          setCurrentNumber(data.number)
+          setDrawnNumbers(data.drawnNumbers || [])
+          setAvailableNumbers(Array.from({ length: 90 }, (_, i) => i + 1).filter(n => !data.drawnNumbers.includes(n)))
+          console.log('Number drawn:', data.number)
+        } else {
+          // Error or all numbers drawn
+          alert(data.message || 'Failed to draw number')
+          setCurrentNumber(null)
+        }
+        setIsSelecting(false)
+      }, animationDuration)
+    } catch (error) {
+      clearInterval(shuffleIntervalId)
+      console.error('Error drawing number:', error)
+      alert('Failed to draw number. Please try again.')
+      setCurrentNumber(null)
+      setIsSelecting(false)
+    }
   }
 
   const handleGameIdSubmit = (e: React.FormEvent) => {
@@ -101,12 +128,35 @@ function Presenter() {
     }
   }
 
-  const resetGame = () => {
-    if (window.confirm('Are you sure you want to reset the game? This will clear all drawn numbers.')) {
+  const resetGame = async () => {
+    if (!window.confirm('Are you sure you want to reset the game? This will clear all drawn numbers.')) {
+      return
+    }
+
+    try {
+      const savedApiKey = localStorage.getItem('admin_api_key')
+      if (!savedApiKey) {
+        alert('Admin API key not found. Please authenticate first.')
+        return
+      }
+
+      // TODO: Add reset endpoint to backend
+      // For now, just reset local state
+      // When backend endpoint is added, call it here:
+      // const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/reset`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'X-API-Key': savedApiKey,
+      //   },
+      // })
+
       setDrawnNumbers([])
       setCurrentNumber(null)
       setAvailableNumbers(Array.from({ length: 90 }, (_, i) => i + 1))
-      // TODO: Send reset to backend
+    } catch (error) {
+      console.error('Error resetting game:', error)
+      alert('Failed to reset game. Please try again.')
     }
   }
 

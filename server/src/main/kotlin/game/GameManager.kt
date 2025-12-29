@@ -4,7 +4,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 data class Game(
     val gameId: String,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val drawnNumbers: MutableSet<Int> = mutableSetOf()
 )
 
 object GameManager {
@@ -80,5 +81,44 @@ object GameManager {
      */
     fun getAllGames(): List<Game> {
         return games.values.toList()
+    }
+    
+    /**
+     * Draws a random number for a game (1-90)
+     * Returns the drawn number, or null if all numbers have been drawn
+     */
+    fun drawNumber(gameId: String): Int? {
+        val game = games[gameId] ?: return null
+        
+        // Generate available numbers (1-90) that haven't been drawn
+        val availableNumbers = (1..90).filter { it !in game.drawnNumbers }
+        
+        if (availableNumbers.isEmpty()) {
+            return null // All numbers have been drawn
+        }
+        
+        // Select a random number from available numbers
+        val drawnNumber = availableNumbers.random()
+        
+        // Add to drawn numbers
+        game.drawnNumbers.add(drawnNumber)
+        
+        return drawnNumber
+    }
+    
+    /**
+     * Gets all drawn numbers for a game
+     */
+    fun getDrawnNumbers(gameId: String): List<Int> {
+        return games[gameId]?.drawnNumbers?.toList()?.sorted() ?: emptyList()
+    }
+    
+    /**
+     * Resets drawn numbers for a game
+     */
+    fun resetDrawnNumbers(gameId: String): Boolean {
+        val game = games[gameId] ?: return false
+        game.drawnNumbers.clear()
+        return true
     }
 }

@@ -85,3 +85,11 @@ data class GameExistsResponse(
     val gameId: String
 )
 
+@Serializable
+data class DrawNumberResponse(
+    val success: Boolean,
+    val number: Int?,
+    val drawnNumbers: List<Int>,
+    val message: String
+)
+
