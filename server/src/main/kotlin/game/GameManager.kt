@@ -12,7 +12,8 @@ data class Game(
     val gameId: String,
     val createdAt: Long = System.currentTimeMillis(),
     val drawnNumbers: MutableSet<Int> = mutableSetOf(),
-    val userCards: MutableMap<String, TombalaCard> = ConcurrentHashMap() // userId -> card
+    val userCards: MutableMap<String, TombalaCard> = ConcurrentHashMap(), // userId -> card
+    val userClosedNumbers: MutableMap<String, MutableSet<Int>> = ConcurrentHashMap() // userId -> closed numbers
 )
 
 object GameManager {
@@ -154,5 +155,41 @@ object GameManager {
     fun removeUserCard(gameId: String, userId: String): Boolean {
         val game = games[gameId] ?: return false
         return game.userCards.remove(userId) != null
+    }
+    
+    /**
+     * Marks a number as closed for a user
+     * Returns true if closed successfully, false if game doesn't exist
+     */
+    fun closeNumberForUser(gameId: String, userId: String, number: Int): Boolean {
+        val game = games[gameId] ?: return false
+        game.userClosedNumbers.getOrPut(userId) { mutableSetOf() }.add(number)
+        return true
+    }
+    
+    /**
+     * Gets all closed numbers for a user
+     * Returns the set of closed numbers, or empty set if game/user doesn't exist
+     */
+    fun getClosedNumbersForUser(gameId: String, userId: String): Set<Int> {
+        return games[gameId]?.userClosedNumbers?.get(userId)?.toSet() ?: emptySet()
+    }
+    
+    /**
+     * Clears all closed numbers for a user (e.g., when they change card)
+     * Returns true if cleared successfully, false if game doesn't exist
+     */
+    fun clearClosedNumbersForUser(gameId: String, userId: String): Boolean {
+        val game = games[gameId] ?: return false
+        game.userClosedNumbers[userId]?.clear()
+        return true
+    }
+    
+    /**
+     * Checks if a number is already closed for a user
+     * Returns true if closed, false otherwise
+     */
+    fun isNumberClosedForUser(gameId: String, userId: String, number: Int): Boolean {
+        return games[gameId]?.userClosedNumbers?.get(userId)?.contains(number) ?: false
     }
 }

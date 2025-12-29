@@ -118,7 +118,9 @@ class WebSocketHandler(
         val success = GameManager.setUserCard(gameId, userId!!, card)
         
         if (success) {
-            logger.info("WebSocket select_card - User '${username}' selected card '${card.id}' in game '$gameId'")
+            // Clear closed numbers when user selects/changes card
+            GameManager.clearClosedNumbersForUser(gameId, userId)
+            logger.info("WebSocket select_card - User '${username}' selected card '${card.id}' in game '$gameId' (closed numbers cleared)")
             // Optionally send a confirmation message back
             // For now, we'll just log it
         } else {

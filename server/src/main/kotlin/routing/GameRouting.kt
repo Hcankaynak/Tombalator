@@ -12,6 +12,7 @@ import com.tombalator.models.CloseNumberResponse
 import com.tombalator.models.CardOptionsResponse
 import com.tombalator.models.TombalaCardData
 import com.tombalator.models.ChatMessage
+import com.tombalator.models.ClosedNumbersResponse
 import com.tombalator.routing.GameRoutingUtils.ResponseType
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
@@ -94,6 +95,57 @@ fun Application.configureGameRouting() {
                         success = true,
                         cards = cardData,
                         message = "Cards generated successfully."
+                    )
+                )
+            }
+            
+            get("/{gameId}/closed-numbers") {
+                val gameId = GameRoutingUtils.getGameId(call) ?: run {
+                    logger.warn("GET /api/game/{gameId}/closed-numbers - Missing game ID")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ClosedNumbersResponse(
+                            success = false,
+                            closedNumbers = emptyList(),
+                            message = "Missing game ID"
+                        )
+                    )
+                    return@get
+                }
+                
+                val userId = call.request.queryParameters["userId"]
+                if (userId.isNullOrBlank()) {
+                    logger.warn("GET /api/game/$gameId/closed-numbers - Missing userId")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        ClosedNumbersResponse(
+                            success = false,
+                            closedNumbers = emptyList(),
+                            message = "User ID is required."
+                        )
+                    )
+                    return@get
+                }
+                
+                logger.info("GET /api/game/$gameId/closed-numbers - Closed numbers requested for user $userId")
+                
+                // Check if game exists
+                if (!GameRoutingUtils.validateGameExists(call, gameId, ResponseType.GENERIC)) {
+                    logger.warn("GET /api/game/$gameId/closed-numbers - Game does not exist")
+                    return@get
+                }
+                
+                // Get closed numbers for user
+                val closedNumbers = GameManager.getClosedNumbersForUser(gameId, userId)
+                
+                logger.info("GET /api/game/$gameId/closed-numbers - SUCCESS: Found ${closedNumbers.size} closed numbers for user $userId")
+                
+                call.respond(
+                    HttpStatusCode.OK,
+                    ClosedNumbersResponse(
+                        success = true,
+                        closedNumbers = closedNumbers.toList(),
+                        message = "Closed numbers retrieved successfully."
                     )
                 )
             }
@@ -287,7 +339,24 @@ fun Application.configureGameRouting() {
                     val canClose = drawnNumbers.contains(request.number)
                     
                     if (canClose) {
-                        logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} can be closed (already drawn and exists on card)")
+                        // Check if number is already closed for this user
+                        if (GameManager.isNumberClosedForUser(gameId, request.userId, request.number)) {
+                            logger.info("POST /api/game/$gameId/close-number - Number ${request.number} already closed for user ${request.userId}")
+                            call.respond(
+                                HttpStatusCode.OK,
+                                CloseNumberResponse(
+                                    success = true,
+                                    canClose = false,
+                                    message = "Number is already closed."
+                                )
+                            )
+                            return@post
+                        }
+                        
+                        // Mark number as closed for this user
+                        GameManager.closeNumberForUser(gameId, request.userId, request.number)
+                        
+                        logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} closed for user ${request.userId}")
                         
                         // Get username for the player who closed the number
                         val username = WebSocketManager.getUsername(gameId, request.userId) ?: "Unknown"

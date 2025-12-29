@@ -127,3 +127,10 @@ data class CardOptionsResponse(
     val message: String
 )
 
+@Serializable
+data class ClosedNumbersResponse(
+    val success: Boolean,
+    val closedNumbers: List<Int>,
+    val message: String
+)
+
