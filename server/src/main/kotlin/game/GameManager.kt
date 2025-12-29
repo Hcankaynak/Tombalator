@@ -107,10 +107,10 @@ object GameManager {
     }
     
     /**
-     * Gets all drawn numbers for a game
+     * Gets all drawn numbers for a game (in order they were drawn, not sorted)
      */
     fun getDrawnNumbers(gameId: String): List<Int> {
-        return games[gameId]?.drawnNumbers?.toList()?.sorted() ?: emptyList()
+        return games[gameId]?.drawnNumbers?.toList() ?: emptyList()
     }
     
     /**

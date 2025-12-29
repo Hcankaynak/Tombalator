@@ -218,27 +218,6 @@ function Presenter() {
         </div>
 
         <div className="presenter-main">
-          <div className="number-display-section">
-            <div className={`current-number-display ${isSelecting ? 'selecting' : ''}`}>
-              {currentNumber ? (
-                <div className="number-content">
-                  <span className="number-value">{currentNumber}</span>
-                </div>
-              ) : (
-                <div className="number-placeholder">
-                  <span>Ready to draw</span>
-                </div>
-              )}
-            </div>
-            <button
-              onClick={selectRandomNumber}
-              disabled={isSelecting || availableNumbers.length === 0}
-              className="draw-button"
-            >
-              {isSelecting ? 'Selecting...' : 'Draw Next Number'}
-            </button>
-          </div>
-
           <div className="drawn-numbers-section">
             <h3>Drawn Numbers ({drawnNumbers.length})</h3>
             <div className="drawn-numbers-grid">
@@ -266,6 +245,27 @@ function Presenter() {
               <div className="stat-label">Total</div>
               <div className="stat-value">90</div>
             </div>
+          </div>
+
+          <div className="number-display-section">
+            <div className={`current-number-display ${isSelecting ? 'selecting' : ''}`}>
+              {currentNumber ? (
+                <div className="number-content">
+                  <span className="number-value">{currentNumber}</span>
+                </div>
+              ) : (
+                <div className="number-placeholder">
+                  <span>Ready to draw</span>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={selectRandomNumber}
+              disabled={isSelecting || availableNumbers.length === 0}
+              className="draw-button"
+            >
+              {isSelecting ? 'Selecting...' : 'Draw Next Number'}
+            </button>
           </div>
         </div>
       </div>

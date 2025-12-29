@@ -42,6 +42,17 @@
   min-height: 60px;
 }
 
+.player-card-cell.has-number {
+  cursor: pointer;
+}
+
+.player-card-cell.has-number:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  position: relative;
+}
+
 /* Card themes - each card has one color theme */
 .player-card.theme-red .player-card-cell.has-number {
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
@@ -104,12 +115,63 @@
   opacity: 0.4;
 }
 
+.player-card-cell.drawn {
+  border: 3px solid var(--accent-color);
+  box-shadow: 0 0 8px rgba(100, 108, 255, 0.3);
+  animation: pulse 1.5s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(100, 108, 255, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(100, 108, 255, 0.6);
+  }
+}
+
+.player-card-cell.clickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.player-card-cell.clickable:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.5);
+  z-index: 1;
+  position: relative;
+}
+
+/* Override hover for clickable drawn numbers - stronger effect */
+.player-card-cell.clickable.has-number:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.5);
+}
+
 .player-card-cell.marked {
   background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%) !important;
   color: #fff !important;
   border-color: var(--accent-color) !important;
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+  position: relative;
+}
+
+.player-card-cell.marked::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 1200px) {

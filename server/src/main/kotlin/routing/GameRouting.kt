@@ -6,6 +6,8 @@ import com.tombalator.models.CreateGameResponse
 import com.tombalator.models.GameExistsResponse
 import com.tombalator.models.DrawNumberResponse
 import com.tombalator.models.NumberDrawnMessage
+import com.tombalator.models.CloseNumberRequest
+import com.tombalator.models.CloseNumberResponse
 import com.tombalator.websocket.WebSocketCodec
 import com.tombalator.websocket.WebSocketHandler
 import com.tombalator.websocket.WebSocketManager
@@ -178,6 +180,91 @@ fun Application.configureGameRouting() {
                             number = null,
                             drawnNumbers = allDrawnNumbers,
                             message = "All numbers (1-90) have already been drawn."
+                        )
+                    )
+                }
+            }
+            
+            post("/{gameId}/close-number") {
+                val gameId = call.parameters["gameId"] ?: run {
+                    logger.warn("POST /api/game/{gameId}/close-number - Missing game ID")
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        CloseNumberResponse(
+                            success = false,
+                            canClose = false,
+                            message = "Missing game ID"
+                        )
+                    )
+                    return@post
+                }
+                
+                logger.info("POST /api/game/$gameId/close-number - Close number requested")
+                
+                // Check if game exists
+                if (!GameManager.gameExists(gameId)) {
+                    logger.warn("POST /api/game/$gameId/close-number - Game does not exist")
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        CloseNumberResponse(
+                            success = false,
+                            canClose = false,
+                            message = "Game with ID '$gameId' does not exist."
+                        )
+                    )
+                    return@post
+                }
+                
+                try {
+                    val request = call.receive<CloseNumberRequest>()
+                    
+                    // Validate number range (1-90)
+                    if (request.number < 1 || request.number > 90) {
+                        logger.warn("POST /api/game/$gameId/close-number - Invalid number: ${request.number}")
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            CloseNumberResponse(
+                                success = false,
+                                canClose = false,
+                                message = "Number must be between 1 and 90."
+                            )
+                        )
+                        return@post
+                    }
+                    
+                    // Check if the number has been drawn
+                    val drawnNumbers = GameManager.getDrawnNumbers(gameId)
+                    val canClose = drawnNumbers.contains(request.number)
+                    
+                    if (canClose) {
+                        logger.info("POST /api/game/$gameId/close-number - SUCCESS: Number ${request.number} can be closed (already drawn)")
+                        call.respond(
+                            HttpStatusCode.OK,
+                            CloseNumberResponse(
+                                success = true,
+                                canClose = true,
+                                message = "Number can be closed."
+                            )
+                        )
+                    } else {
+                        logger.info("POST /api/game/$gameId/close-number - FAILED: Number ${request.number} cannot be closed (not drawn yet)")
+                        call.respond(
+                            HttpStatusCode.OK,
+                            CloseNumberResponse(
+                                success = true,
+                                canClose = false,
+                                message = "Number cannot be closed. It has not been drawn yet."
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    logger.error("POST /api/game/$gameId/close-number - Error parsing request: ${e.message}", e)
+                    call.respond(
+                        HttpStatusCode.BadRequest,
+                        CloseNumberResponse(
+                            success = false,
+                            canClose = false,
+                            message = "Invalid request format."
                         )
                     )
                 }

@@ -86,6 +86,18 @@ data class GameExistsResponse(
 )
 
 @Serializable
+data class CloseNumberRequest(
+    val number: Int
+)
+
+@Serializable
+data class CloseNumberResponse(
+    val success: Boolean,
+    val canClose: Boolean,
+    val message: String
+)
+
+@Serializable
 data class DrawNumberResponse(
     val success: Boolean,
     val number: Int?,

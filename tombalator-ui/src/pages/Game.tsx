@@ -47,6 +47,8 @@ function Game() {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isCheckingGame, setIsCheckingGame] = useState(true)
   const [gameExists, setGameExists] = useState(false)
+  const [drawnNumbers, setDrawnNumbers] = useState<number[]>([])
+  const [closedNumbers, setClosedNumbers] = useState<Set<number>>(new Set())
 
   // Check if game exists when component mounts or gameId changes
   useEffect(() => {
@@ -166,8 +168,11 @@ function Game() {
           }
           break
         case 'number_drawn':
-          // Handle number drawn (for future game logic)
-          console.log('Number drawn:', message.number)
+          // Handle number drawn - update drawn numbers list
+          if (message.number && message.drawnNumbers) {
+            console.log('Number drawn:', message.number)
+            setDrawnNumbers(message.drawnNumbers || [])
+          }
           break
         case 'error':
           // Handle error messages (e.g., duplicate nickname)
@@ -201,6 +206,8 @@ function Game() {
   const handleCardSelect = (card: TombalaCard) => {
     setSelectedCard(card)
     setShowCardSelection(false)
+    // Reset closed numbers when selecting a new card
+    setClosedNumbers(new Set())
   }
 
   const handleChangeCard = () => {
@@ -208,6 +215,55 @@ function Game() {
     const cards = generateCards(3)
     setAvailableCards(cards)
     setShowCardSelection(true)
+    // Reset closed numbers when changing card
+    setClosedNumbers(new Set())
+  }
+
+  const handleNumberClick = async (number: number) => {
+    // If number is already closed, don't allow unmarking (one-way action)
+    if (closedNumbers.has(number)) {
+      return
+    }
+
+    if (!gameId) {
+      return
+    }
+
+    try {
+      // Check with backend if number can be closed
+      const response = await fetch(`${API_BASE_URL}/api/game/${gameId}/close-number`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ number }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to check if number can be closed')
+      }
+
+      const data = await response.json()
+
+      if (data.success && data.canClose) {
+        // Number can be closed - update local state
+        setClosedNumbers((prev) => {
+          const newSet = new Set(prev)
+          newSet.add(number)
+          return newSet
+        })
+        console.log(`Number ${number} closed successfully`)
+      } else {
+        // Number cannot be closed (not drawn yet)
+        console.log(`Number ${number} cannot be closed: ${data.message || 'Not drawn yet'}`)
+        // Optionally show a message to the user
+        // setErrorMessage(data.message || 'Number cannot be closed yet')
+      }
+    } catch (error) {
+      console.error('Error closing number:', error)
+      // Optionally show error message to user
+      // setErrorMessage('Failed to close number. Please try again.')
+    }
   }
 
   const handleSendMessage = (text: string) => {
@@ -335,7 +391,12 @@ function Game() {
                     Change Card
                   </button>
                 </div>
-                <PlayerCard card={selectedCard} />
+                <PlayerCard 
+                  card={selectedCard} 
+                  markedNumbers={closedNumbers}
+                  drawnNumbers={drawnNumbers}
+                  onNumberClick={handleNumberClick}
+                />
               </div>
             ) : (
               <div className="game-card-placeholder">
