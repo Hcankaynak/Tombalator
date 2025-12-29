@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tombalator-config
+  namespace: tombalator
+data:
+  # Frontend environment variables
+  VITE_API_URL: ""  # Empty for production (uses nginx proxy)
+  VITE_WS_URL: ""   # Empty for production (uses nginx proxy)
+  # Backend configuration
+  ADMIN_API_KEY: "your-admin-api-key-here"  # Replace with your actual API key
+

@@ -1,0 +1,32 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: tombalator
+
+resources:
+  - namespace.yaml
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - ingress.yaml
+  - configmap.yaml
+
+# Uncomment if using cert-manager
+# resources:
+#   - cert-manager-issuer.yaml
+
+# Common labels
+commonLabels:
+  app: tombalator
+  version: v1.0.0
+
+# Image configuration (update with your registry)
+images:
+  - name: tombalator-server
+    newName: your-registry.io/tombalator-server
+    newTag: latest
+  - name: tombalator-frontend
+    newName: your-registry.io/tombalator-frontend
+    newTag: latest
+
