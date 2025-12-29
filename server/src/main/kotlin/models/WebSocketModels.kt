@@ -73,6 +73,20 @@ data class ErrorMessage(
 ) : WebSocketMessage()
 
 @Serializable
+@SerialName("select_card")
+data class SelectCardMessage(
+    val userId: String,
+    val card: TombalaCardData
+) : WebSocketMessage()
+
+@Serializable
+data class TombalaCardData(
+    val id: String,
+    val rows: List<List<Int?>>, // null represents empty cell
+    val theme: String? = null
+)
+
+@Serializable
 data class CreateGameResponse(
     val success: Boolean,
     val gameId: String?,

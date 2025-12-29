@@ -2,10 +2,17 @@ package com.tombalator.game
 
 import java.util.concurrent.ConcurrentHashMap
 
+data class TombalaCard(
+    val id: String,
+    val rows: List<List<Int?>>, // null represents empty cell
+    val theme: String? = null
+)
+
 data class Game(
     val gameId: String,
     val createdAt: Long = System.currentTimeMillis(),
-    val drawnNumbers: MutableSet<Int> = mutableSetOf()
+    val drawnNumbers: MutableSet<Int> = mutableSetOf(),
+    val userCards: MutableMap<String, TombalaCard> = ConcurrentHashMap() // userId -> card
 )
 
 object GameManager {
@@ -120,5 +127,32 @@ object GameManager {
         val game = games[gameId] ?: return false
         game.drawnNumbers.clear()
         return true
+    }
+    
+    /**
+     * Stores a user's selected card for a game
+     * Returns true if stored successfully, false if game doesn't exist
+     */
+    fun setUserCard(gameId: String, userId: String, card: TombalaCard): Boolean {
+        val game = games[gameId] ?: return false
+        game.userCards[userId] = card
+        return true
+    }
+    
+    /**
+     * Gets a user's card for a game
+     * Returns the card if found, null otherwise
+     */
+    fun getUserCard(gameId: String, userId: String): TombalaCard? {
+        return games[gameId]?.userCards?.get(userId)
+    }
+    
+    /**
+     * Removes a user's card from a game
+     * Returns true if removed successfully, false if game or user doesn't exist
+     */
+    fun removeUserCard(gameId: String, userId: String): Boolean {
+        val game = games[gameId] ?: return false
+        return game.userCards.remove(userId) != null
     }
 }

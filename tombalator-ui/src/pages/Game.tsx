@@ -208,6 +208,19 @@ function Game() {
     setShowCardSelection(false)
     // Reset closed numbers when selecting a new card
     setClosedNumbers(new Set())
+    
+    // Send card selection to backend via WebSocket
+    if (currentUserId && isConnected && sendMessage) {
+      sendMessage({
+        type: 'select_card',
+        userId: currentUserId,
+        card: {
+          id: card.id,
+          rows: card.rows,
+          theme: card.theme || null,
+        },
+      })
+    }
   }
 
   const handleChangeCard = () => {
@@ -217,6 +230,7 @@ function Game() {
     setShowCardSelection(true)
     // Reset closed numbers when changing card
     setClosedNumbers(new Set())
+    // Note: When user selects a new card, handleCardSelect will send it to backend
   }
 
   const handleNumberClick = async (number: number) => {

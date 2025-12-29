@@ -93,6 +93,40 @@ class WebSocketHandler(
         )
     }
     
+    suspend fun handleSelectCard(message: SelectCardMessage) {
+        if (userId == null || username == null) {
+            logger.warn("WebSocket select_card - Unauthenticated user attempted to select card in game '$gameId'")
+            sendError("Not authenticated. Please join game first.")
+            return
+        }
+        
+        // Validate that the message userId matches the current user
+        if (message.userId != userId) {
+            logger.warn("WebSocket select_card - User ID mismatch. Expected: $userId, got: ${message.userId}")
+            sendError("User ID mismatch.")
+            return
+        }
+        
+        // Convert TombalaCardData to TombalaCard (game model)
+        val card = com.tombalator.game.TombalaCard(
+            id = message.card.id,
+            rows = message.card.rows,
+            theme = message.card.theme
+        )
+        
+        // Store the card in GameManager
+        val success = GameManager.setUserCard(gameId, userId!!, card)
+        
+        if (success) {
+            logger.info("WebSocket select_card - User '${username}' selected card '${card.id}' in game '$gameId'")
+            // Optionally send a confirmation message back
+            // For now, we'll just log it
+        } else {
+            logger.warn("WebSocket select_card - Failed to store card for user '${username}' in game '$gameId'")
+            sendError("Failed to store card. Game may not exist.")
+        }
+    }
+    
     suspend fun handleLeave() {
         if (userId == null || username == null) {
             return
@@ -102,6 +136,11 @@ class WebSocketHandler(
         
         // Remove connection
         WebSocketManager.removeConnection(session)
+        
+        // Remove user's card when they leave
+        if (userId != null) {
+            GameManager.removeUserCard(gameId, userId!!)
+        }
         
         // Broadcast updated players list to remaining players
         broadcastPlayersUpdate()
@@ -120,6 +159,10 @@ class WebSocketHandler(
             }
             is ChatMessage -> {
                 handleChat(message)
+                true
+            }
+            is SelectCardMessage -> {
+                handleSelectCard(message)
                 true
             }
             is LeaveGameMessage -> {
